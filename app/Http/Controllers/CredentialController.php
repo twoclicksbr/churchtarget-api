@@ -5,6 +5,8 @@ use App\Models\Credential;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use App\Helpers\LogHelper;
+
 
 use Illuminate\Http\Request;
 
@@ -73,6 +75,8 @@ class CredentialController extends Controller
             ];
         });
 
+        LogHelper::createLog('viewed', 'credential', 0);
+
         return response()->json([
             'credentials' => $dados,
             'applied_filters' => $request->all(),
@@ -103,6 +107,8 @@ class CredentialController extends Controller
         if (!$credential) {
             return response()->json(['error' => 'Credencial não encontrada.'], 404);
         }
+
+        LogHelper::createLog('show', 'credential', $credential->id);
 
         return response()->json([
             'id' => $credential->id,
@@ -159,6 +165,8 @@ class CredentialController extends Controller
             'active' => $active,
         ]);
 
+        LogHelper::createLog('created', 'credential', $credential->id, null, $credential->toArray());
+
         return response()->json([
             'id' => $credential->id,
             'username' => $credential->username,
@@ -214,11 +222,15 @@ class CredentialController extends Controller
             ], 422);
         }
 
+        $old = $credential->toArray();
+
         $credential->update([
             'username' => $username,
             'active' => $request->active,
             'token' => Str::random(40),
         ]);
+
+        LogHelper::createLog('updated', 'credential', $credential->id, $old, $credential->toArray());
 
         return response()->json([
             'id' => $credential->id,
@@ -245,7 +257,11 @@ class CredentialController extends Controller
             return response()->json(['error' => 'Credencial não encontrada.'], 404);
         }
 
+        $old = $credential->toArray();
+
         $credential->delete();
+
+        LogHelper::createLog('deleted', 'credential', $credential->id, $old, null);
 
         return response()->json([
             'message' => 'Credencial excluída com sucesso.'
