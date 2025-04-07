@@ -7,11 +7,11 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use App\Helpers\LogHelper;
 
-class TypeGenderController extends Controller
+class TypeUserController extends Controller
 {
-    protected string $tableName = 'type_gender';
-    protected string $tableLabel = 'type_genders';
-    protected string $modelName = 'TypeGender';
+    protected string $tableName = 'type_user';
+    protected string $tableLabel = 'type_users';
+    protected string $modelName = 'TypeUser';
 
     protected function model()
     {
@@ -23,17 +23,12 @@ class TypeGenderController extends Controller
     {
         $idCredential = session('id_credential');
 
-        if ($idCredential == 1) {
-            $query = $this->model()->newQuery();
-        } else {
-            $query = $this->model()->where('id_credential', $idCredential);
-        }
+        $query = $idCredential == 1
+            ? $this->model()->newQuery()
+            : $this->model()->where('id_credential', $idCredential);
 
         if ($request->filled('id')) {
-            $ids = $request->id;
-            if (is_string($ids)) {
-                $ids = explode(',', $ids);
-            }
+            $ids = is_string($request->id) ? explode(',', $request->id) : $request->id;
             $query->whereIn('id', (array) $ids);
         }
 
@@ -58,7 +53,7 @@ class TypeGenderController extends Controller
                     $query->where($field, $suffix === '_start' ? '>=' : '<=', $value);
                 }
             }
-        }        
+        }
 
         $sortBy = $request->get('sort_by', 'id');
         $sortOrder = $request->get('sort_order', 'desc');
@@ -69,15 +64,13 @@ class TypeGenderController extends Controller
 
         $perPage = $request->get('per_page', 10);
 
-        $dados = $query->paginate($perPage)->through(function ($item) {
-            return [
-                'id' => $item->id,
-                'name' => $item->name,
-                'active' => $item->active,
-                'created_at' => $item->created_at->format('Y-m-d H:i:s'),
-                'updated_at' => $item->updated_at->format('Y-m-d H:i:s'),
-            ];
-        });
+        $dados = $query->paginate($perPage)->through(fn($item) => [
+            'id' => $item->id,
+            'name' => $item->name,
+            'active' => $item->active,
+            'created_at' => $item->created_at->format('Y-m-d H:i:s'),
+            'updated_at' => $item->updated_at->format('Y-m-d H:i:s'),
+        ]);
 
         LogHelper::createLog('viewed', $this->tableName, 0, null, $request->all());
 

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CredentialController;
 use App\Http\Controllers\TypeGenderController;
+use App\Http\Controllers\TypeUserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +36,14 @@ Route::prefix('v1')->middleware('verify.headers')->group(function () {
             Route::post('', [TypeGenderController::class, 'store']);
             Route::put('/{id}', [TypeGenderController::class, 'update']);
             Route::delete('/{id}', [TypeGenderController::class, 'destroy']);
+        });
+
+        Route::prefix('type-user')->group(function () {
+            Route::get('', [TypeUserController::class, 'index']);
+            Route::get('/{id}', [TypeUserController::class, 'show']);
+            Route::post('', [TypeUserController::class, 'store']);
+            Route::put('/{id}', [TypeUserController::class, 'update']);
+            Route::delete('/{id}', [TypeUserController::class, 'destroy']);
         });
 
     });
