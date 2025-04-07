@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TypeGender;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -10,20 +9,30 @@ use App\Helpers\LogHelper;
 
 class TypeGenderController extends Controller
 {
+    protected string $tableName = 'type_gender';
+    protected string $tableLabel = 'type_genders';
+    protected string $modelName = 'TypeGender';
+
+    protected function model()
+    {
+        $modelClass = '\\App\\Models\\' . $this->modelName;
+        return new $modelClass;
+    }
+
     public function index(Request $request)
     {
         $idCredential = session('id_credential');
 
         if ($idCredential == 1) {
-            $query = TypeGender::query();
+            $query = $this->model()->newQuery();
         } else {
-            $query = TypeGender::where('id_credential', $idCredential);
+            $query = $this->model()->where('id_credential', $idCredential);
         }
 
         if ($request->filled('id')) {
             $ids = $request->id;
             if (is_string($ids)) {
-                $ids = explode(',', $ids); // transforma "2,1" em [2, 1]
+                $ids = explode(',', $ids);
             }
             $query->whereIn('id', (array) $ids);
         }
@@ -36,6 +45,30 @@ class TypeGenderController extends Controller
             $query->where('active', $request->active);
         } else {
             $query->where('active', 1);
+        }
+
+        if ($request->filled('created_at_start')) {
+            $start = $request->created_at_start;
+            $start .= strlen($start) === 10 ? ' 00:00:00' : '';
+            $query->where('created_at', '>=', $start);
+        }
+
+        if ($request->filled('created_at_end')) {
+            $end = $request->created_at_end;
+            $end .= strlen($end) === 10 ? ' 23:59:59' : '';
+            $query->where('created_at', '<=', $end);
+        }
+
+        if ($request->filled('updated_at_start')) {
+            $start = $request->updated_at_start;
+            $start .= strlen($start) === 10 ? ' 00:00:00' : '';
+            $query->where('updated_at', '>=', $start);
+        }
+
+        if ($request->filled('updated_at_end')) {
+            $end = $request->updated_at_end;
+            $end .= strlen($end) === 10 ? ' 23:59:59' : '';
+            $query->where('updated_at', '<=', $end);
         }
 
         $sortBy = $request->get('sort_by', 'id');
@@ -56,12 +89,21 @@ class TypeGenderController extends Controller
                 'updated_at' => $item->updated_at->format('Y-m-d H:i:s'),
             ];
         });
-        
-        LogHelper::createLog('viewed', 'type_gender', 0);
+
+        LogHelper::createLog('viewed', $this->tableName, 0, null, $request->all());
 
         return response()->json([
-            'type_genders' => $dados,
+            $this->tableLabel => $dados,
             'applied_filters' => $request->all(),
+            'available_filters' => [
+                'id' => 'array ou string separada por vírgula',
+                'name' => 'string',
+                'active' => '0 ou 1',
+                'created_at_start' => 'data (Y-m-d)',
+                'created_at_end' => 'data (Y-m-d)',
+                'updated_at_start' => 'data (Y-m-d)',
+                'updated_at_end' => 'data (Y-m-d)',
+            ],
             'options' => [
                 'sort_by' => $sortBy,
                 'sort_order' => $sortOrder,
@@ -74,27 +116,26 @@ class TypeGenderController extends Controller
     {
         $idCredential = session('id_credential');
 
-        $query = TypeGender::where('id', $id);
+        $query = $this->model()->where('id', $id);
         if ($idCredential != 1) {
             $query->where('id_credential', $idCredential);
         }
 
-        $gender = $query->where('active', 1)->first();
+        $record = $query->where('active', 1)->first();
 
-        if (!$gender) {
+        if (!$record) {
             return response()->json(['error' => 'Registro não encontrado.'], 404);
         }
 
-        LogHelper::createLog('show', 'type_gender', $gender->id);
+        LogHelper::createLog('show', $this->tableName, $record->id);
 
         return response()->json([
-            'id' => $gender->id,
-            'name' => $gender->name,
-            'active' => $gender->active,
-            'created_at' => $gender->created_at->format('Y-m-d H:i:s'),
-            'updated_at' => $gender->updated_at->format('Y-m-d H:i:s'),
+            'id' => $record->id,
+            'name' => $record->name,
+            'active' => $record->active,
+            'created_at' => $record->created_at->format('Y-m-d H:i:s'),
+            'updated_at' => $record->updated_at->format('Y-m-d H:i:s'),
         ]);
-        
     }
 
     public function store(Request $request)
@@ -102,7 +143,7 @@ class TypeGenderController extends Controller
         $idCredential = session('id_credential');
 
         $validator = Validator::make($request->all(), [
-            'name' => 'required|unique:type_gender,name',
+            'name' => 'required|unique:' . $this->tableName . ',name',
         ], [
             'name.required' => 'O campo name é obrigatório.',
             'name.unique' => 'Este nome já está em uso.',
@@ -114,20 +155,20 @@ class TypeGenderController extends Controller
             ], 422));
         }
 
-        $gender = TypeGender::create([
+        $record = $this->model()->create([
             'id_credential' => $idCredential,
             'name' => $request->name,
             'active' => 1,
         ]);
 
-        LogHelper::createLog('created', 'type_gender', $gender->id, null, $gender->toArray());
+        LogHelper::createLog('created', $this->tableName, $record->id, null, $record->toArray());
 
         return response()->json([
-            'id' => $gender->id,
-            'name' => $gender->name,
-            'active' => $gender->active,
-            'created_at' => $gender->created_at->format('Y-m-d H:i:s'),
-            'updated_at' => $gender->updated_at->format('Y-m-d H:i:s'),
+            'id' => $record->id,
+            'name' => $record->name,
+            'active' => $record->active,
+            'created_at' => $record->created_at->format('Y-m-d H:i:s'),
+            'updated_at' => $record->updated_at->format('Y-m-d H:i:s'),
         ], 201);
     }
 
@@ -135,14 +176,14 @@ class TypeGenderController extends Controller
     {
         $idCredential = session('id_credential');
 
-        $gender = TypeGender::find($id);
+        $record = $this->model()->find($id);
 
-        if (!$gender || ($idCredential != 1 && $gender->id_credential != $idCredential)) {
+        if (!$record || ($idCredential != 1 && $record->id_credential != $idCredential)) {
             return response()->json(['error' => 'Registro não encontrado.'], 404);
         }
 
         $validator = Validator::make($request->all(), [
-            'name' => 'required|unique:type_gender,name,' . $id,
+            'name' => 'required|unique:' . $this->tableName . ',name,' . $id,
             'active' => 'required|in:0,1',
         ], [
             'name.required' => 'O campo name é obrigatório.',
@@ -155,21 +196,21 @@ class TypeGenderController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $old = $gender->toArray();
+        $old = $record->toArray();
 
-        $gender->update([
+        $record->update([
             'name' => $request->name,
             'active' => $request->active,
         ]);
 
-        LogHelper::createLog('updated', 'type_gender', $gender->id, $old, $gender->toArray());
+        LogHelper::createLog('updated', $this->tableName, $record->id, $old, $record->toArray());
 
         return response()->json([
-            'id' => $gender->id,
-            'name' => $gender->name,
-            'active' => $gender->active,
-            'created_at' => $gender->created_at->format('Y-m-d H:i:s'),
-            'updated_at' => $gender->updated_at->format('Y-m-d H:i:s'),
+            'id' => $record->id,
+            'name' => $record->name,
+            'active' => $record->active,
+            'created_at' => $record->created_at->format('Y-m-d H:i:s'),
+            'updated_at' => $record->updated_at->format('Y-m-d H:i:s'),
         ]);
     }
 
@@ -177,17 +218,17 @@ class TypeGenderController extends Controller
     {
         $idCredential = session('id_credential');
 
-        $gender = TypeGender::find($id);
+        $record = $this->model()->find($id);
 
-        if (!$gender || ($idCredential != 1 && $gender->id_credential != $idCredential)) {
+        if (!$record || ($idCredential != 1 && $record->id_credential != $idCredential)) {
             return response()->json(['error' => 'Registro não encontrado.'], 404);
         }
 
-        $old = $gender->toArray();
+        $old = $record->toArray();
 
-        $gender->delete();
+        $record->delete();
 
-        LogHelper::createLog('deleted', 'type_gender', $gender->id, $old, null);
+        LogHelper::createLog('deleted', $this->tableName, $record->id, $old, null);
 
         return response()->json(['message' => 'Registro excluído com sucesso.']);
     }
