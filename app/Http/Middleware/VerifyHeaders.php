@@ -5,16 +5,24 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use App\Models\Credential;
+use Illuminate\Support\Facades\Log;
 
 class VerifyHeaders
 {
     public function handle(Request $request, Closure $next)
     {
+
+        // Log::info("Passei por aqui");
+        
         $username = $request->header('username');
         $token = $request->header('token');
 
-        if (!$username || !$token) {
-            return response()->json(['error' => 'Cabeçalhos username e token são obrigatórios.'], 401);
+        if (!$username) {
+            return response()->json(['error' => 'Informe o username no header.'], 401);
+        }
+
+        if (!$token) {
+            return response()->json(['error' => 'Informe o token no header.'], 401);
         }
 
         // Verifica credencial no banco
