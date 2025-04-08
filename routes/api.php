@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CredentialController;
 use App\Http\Controllers\TypeGenderController;
+use App\Http\Controllers\TypeParticipationController;
 use App\Http\Controllers\TypeUserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -44,6 +45,14 @@ Route::prefix('v1')->middleware('verify.headers')->group(function () {
             Route::post('', [TypeUserController::class, 'store']);
             Route::put('/{id}', [TypeUserController::class, 'update']);
             Route::delete('/{id}', [TypeUserController::class, 'destroy']);
+        });
+
+        Route::prefix('type-participation')->group(function () {
+            Route::get('', [TypeParticipationController::class, 'index']);
+            Route::get('/{id}', [TypeParticipationController::class, 'show']);
+            Route::post('', [TypeParticipationController::class, 'store']);
+            Route::put('/{id}', [TypeParticipationController::class, 'update']);
+            Route::delete('/{id}', [TypeParticipationController::class, 'destroy']);
         });
 
     });
