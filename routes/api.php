@@ -3,6 +3,7 @@
 use App\Http\Controllers\CredentialController;
 use App\Http\Controllers\TypeGenderController;
 use App\Http\Controllers\TypeParticipationController;
+use App\Http\Controllers\TypeShareController;
 use App\Http\Controllers\TypeUserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -53,6 +54,14 @@ Route::prefix('v1')->middleware('verify.headers')->group(function () {
             Route::post('', [TypeParticipationController::class, 'store']);
             Route::put('/{id}', [TypeParticipationController::class, 'update']);
             Route::delete('/{id}', [TypeParticipationController::class, 'destroy']);
+        });
+
+        Route::prefix('type-share')->group(function () {
+            Route::get('', [TypeShareController::class, 'index']);
+            Route::get('/{id}', [TypeShareController::class, 'show']);
+            Route::post('', [TypeShareController::class, 'store']);
+            Route::put('/{id}', [TypeShareController::class, 'update']);
+            Route::delete('/{id}', [TypeShareController::class, 'destroy']);
         });
 
     });
