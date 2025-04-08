@@ -1,8 +1,5 @@
 <?php
 
-// MODELO BASE - NAO UTILIZAR DIRETAMENTE
-// Use este arquivo como referência para criar novas models
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;

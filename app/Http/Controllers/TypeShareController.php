@@ -1,8 +1,5 @@
 <?php
 
-// MODELO BASE - NÃO UTILIZAR DIRETAMENTE
-// Use este arquivo como referência para criar novas controllers
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
