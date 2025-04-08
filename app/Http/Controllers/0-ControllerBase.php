@@ -1,23 +1,23 @@
 <?php
 
+// MODELO BASE - NÃO UTILIZAR DIRETAMENTE
+// Use este arquivo como referência para criar novas controllers
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
-use App\Helpers\LogHelper;
-use App\Helpers\FilterHelper;
+use App\Helpers\{FilterHelper, LogHelper};
 
-class TypeUserController extends Controller
+class NomeController extends Controller
 {
-    protected string $tableName = 'type_user';
-    protected string $tableLabel = 'type_users';
-    protected string $modelName = 'TypeUser';
+    protected string $tableName = 'nome_da_tabela';
+    protected string $tableLabel = 'nome_label_resposta';
+    protected string $modelName = 'NomeModel';
 
     protected function model()
     {
-        $modelClass = '\\App\\Models\\' . $this->modelName;
-        return new $modelClass;
+        $modelClass = "\\App\\Models\\{$this->modelName}";
+        return new $modelClass();
     }
 
     public function index(Request $request)
@@ -28,9 +28,7 @@ class TypeUserController extends Controller
         $query = FilterHelper::applyActiveFilter($query, $request);
         $query = FilterHelper::applyDateFilters($query, $request);
         $query = FilterHelper::applyOrderFilter($query, $request);
-
-        $options = FilterHelper::getOptions($request);
-        $perPage = $options['per_page'];
+        $perPage = FilterHelper::getPerPage($request);
 
         $dados = $query->paginate($perPage)->through(function ($item) {
             return [
@@ -56,10 +54,9 @@ class TypeUserController extends Controller
                 'updated_at_start' => 'data (Y-m-d)',
                 'updated_at_end' => 'data (Y-m-d)',
             ],
-            'options' => $options,
+            'options' => FilterHelper::getOptions($request),
         ]);
     }
-
 
     public function show($id)
     {
@@ -78,23 +75,15 @@ class TypeUserController extends Controller
 
     public function store(Request $request)
     {
-        $idCredential = session('id_credential');
-
-        $validator = Validator::make($request->all(), [
+        FilterHelper::validateOrFail($request->all(), [
             'name' => 'required|unique:' . $this->tableName . ',name',
         ], [
             'name.required' => 'O campo name é obrigatório.',
             'name.unique' => 'Este nome já está em uso.',
         ]);
 
-        if ($validator->fails()) {
-            throw new ValidationException($validator, response()->json([
-                'errors' => $validator->errors(),
-            ], 422));
-        }
-
         $record = $this->model()->create([
-            'id_credential' => $idCredential,
+            'id_credential' => session('id_credential'),
             'name' => $request->name,
             'active' => 1,
         ]);
@@ -122,7 +111,7 @@ class TypeUserController extends Controller
             'name.unique' => 'Este nome já está em uso.',
             'active.required' => 'O campo active é obrigatório.',
             'active.in' => 'O campo active deve ser 0 ou 1.',
-        ]);        
+        ]);
 
         $old = $record->toArray();
 
@@ -147,7 +136,6 @@ class TypeUserController extends Controller
         $record = FilterHelper::findEditableOrFail($this->model(), $id);
 
         $old = $record->toArray();
-
         $record->delete();
 
         LogHelper::createLog('deleted', $this->tableName, $record->id, $old, null);

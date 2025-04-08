@@ -4,14 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+// 🔁 ALTERAR O NOME DA CLASSE
 class TypeUser extends Model
 {
-    protected $table = 'type_user';
+    // 🔁 ALTERAR O NOME DA TABELA
+    protected string $tableName = 'type_user';
 
     protected $fillable = [
         'id_credential',
         'name',
         'active',
+        // 🔁 ADICIONAR OUTROS CAMPOS SE NECESSÁRIO
     ];
 
     protected $hidden = [
@@ -26,6 +29,12 @@ class TypeUser extends Model
         'created_at_formatted',
         'updated_at_formatted',
     ];
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->table = $this->tableName;
+    }
 
     // Formata datas
     public function getCreatedAtFormattedAttribute()

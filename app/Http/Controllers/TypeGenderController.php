@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use App\Helpers\LogHelper;
+use App\Helpers\FilterHelper;
 
 class TypeGenderController extends Controller
 {
@@ -21,53 +22,15 @@ class TypeGenderController extends Controller
 
     public function index(Request $request)
     {
-        $idCredential = session('id_credential');
+        $query = FilterHelper::baseQuery($this->model());
+        $query = FilterHelper::applyIdFilter($query, $request);
+        $query = FilterHelper::applyNameFilter($query, $request);
+        $query = FilterHelper::applyActiveFilter($query, $request);
+        $query = FilterHelper::applyDateFilters($query, $request);
+        $query = FilterHelper::applyOrderFilter($query, $request);
 
-        if ($idCredential == 1) {
-            $query = $this->model()->newQuery();
-        } else {
-            $query = $this->model()->where('id_credential', $idCredential);
-        }
-
-        if ($request->filled('id')) {
-            $ids = $request->id;
-            if (is_string($ids)) {
-                $ids = explode(',', $ids);
-            }
-            $query->whereIn('id', (array) $ids);
-        }
-
-        if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
-        }
-
-        if ($request->filled('active')) {
-            $query->where('active', $request->active);
-        } else {
-            $query->where('active', 1);
-        }
-
-        foreach (['created_at', 'updated_at'] as $field) {
-            foreach (['_start', '_end'] as $suffix) {
-                $key = $field . $suffix;
-                if ($request->filled($key)) {
-                    $value = $request->$key;
-                    $value .= strlen($value) === 10
-                        ? ($suffix === '_start' ? ' 00:00:00' : ' 23:59:59')
-                        : '';
-                    $query->where($field, $suffix === '_start' ? '>=' : '<=', $value);
-                }
-            }
-        }        
-
-        $sortBy = $request->get('sort_by', 'id');
-        $sortOrder = $request->get('sort_order', 'desc');
-
-        if (in_array($sortBy, ['id', 'name', 'active', 'created_at', 'updated_at'])) {
-            $query->orderBy($sortBy, $sortOrder);
-        }
-
-        $perPage = $request->get('per_page', 10);
+        $options = FilterHelper::getOptions($request);
+        $perPage = $options['per_page'];
 
         $dados = $query->paginate($perPage)->through(function ($item) {
             return [
@@ -93,28 +56,14 @@ class TypeGenderController extends Controller
                 'updated_at_start' => 'data (Y-m-d)',
                 'updated_at_end' => 'data (Y-m-d)',
             ],
-            'options' => [
-                'sort_by' => $sortBy,
-                'sort_order' => $sortOrder,
-                'per_page' => $perPage,
-            ],
+            'options' => $options,
         ]);
     }
 
+
     public function show($id)
     {
-        $idCredential = session('id_credential');
-
-        $query = $this->model()->where('id', $id);
-        if ($idCredential != 1) {
-            $query->where('id_credential', $idCredential);
-        }
-
-        $record = $query->where('active', 1)->first();
-
-        if (!$record) {
-            return response()->json(['error' => 'Registro não encontrado.'], 404);
-        }
+        $record = FilterHelper::findOrFail($this->model(), $id);
 
         LogHelper::createLog('show', $this->tableName, $record->id);
 
@@ -163,15 +112,9 @@ class TypeGenderController extends Controller
 
     public function update(Request $request, $id)
     {
-        $idCredential = session('id_credential');
+        $record = FilterHelper::findEditableOrFail($this->model(), $id);
 
-        $record = $this->model()->find($id);
-
-        if (!$record || ($idCredential != 1 && $record->id_credential != $idCredential)) {
-            return response()->json(['error' => 'Registro não encontrado.'], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
+        FilterHelper::validateOrFail($request->all(), [
             'name' => 'required|unique:' . $this->tableName . ',name,' . $id,
             'active' => 'required|in:0,1',
         ], [
@@ -180,10 +123,6 @@ class TypeGenderController extends Controller
             'active.required' => 'O campo active é obrigatório.',
             'active.in' => 'O campo active deve ser 0 ou 1.',
         ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
 
         $old = $record->toArray();
 
@@ -205,13 +144,7 @@ class TypeGenderController extends Controller
 
     public function destroy($id)
     {
-        $idCredential = session('id_credential');
-
-        $record = $this->model()->find($id);
-
-        if (!$record || ($idCredential != 1 && $record->id_credential != $idCredential)) {
-            return response()->json(['error' => 'Registro não encontrado.'], 404);
-        }
+        $record = FilterHelper::findEditableOrFail($this->model(), $id);
 
         $old = $record->toArray();
 
