@@ -4,6 +4,7 @@ use App\Http\Controllers\CredentialController;
 use App\Http\Controllers\ObsController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\PersonUserController;
+use App\Http\Controllers\TypeAddressController;
 use App\Http\Controllers\TypeGenderController;
 use App\Http\Controllers\TypeGroupController;
 use App\Http\Controllers\TypeParticipationController;
@@ -98,6 +99,14 @@ Route::prefix('v1')->middleware('verify.headers')->group(function () {
             Route::post('', [PersonUserController::class, 'store']);
             Route::put('/{id}', [PersonUserController::class, 'update']);
             Route::delete('/{id}', [PersonUserController::class, 'destroy']);
+        });
+
+        Route::prefix('type-address')->group(function () {
+            Route::get('', [TypeAddressController::class, 'index']);
+            Route::get('/{id}', [TypeAddressController::class, 'show']);
+            Route::post('', [TypeAddressController::class, 'store']);
+            Route::put('/{id}', [TypeAddressController::class, 'update']);
+            Route::delete('/{id}', [TypeAddressController::class, 'destroy']);
         });
 
     });
