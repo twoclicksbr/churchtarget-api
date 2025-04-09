@@ -32,6 +32,8 @@ class FilterHelper
         return $query;
     }
 
+    
+
 
     // Aplica filtro no campo "id_person".
     // - Aceita múltiplos valores como string separada por vírgula ou array.
@@ -41,6 +43,31 @@ class FilterHelper
         if ($request->filled('id_person')) {
             $id_persons = is_string($request->id_person) ? explode(',', $request->id_person) : $request->id_person;
             $query->whereIn('id_person', (array) $id_persons);
+        }
+        return $query;
+    }
+
+    // Aplica filtro no campo "id_type_gender".
+    // - Aceita múltiplos valores como string separada por vírgula ou array.
+    // - Utiliza whereIn para filtrar pelos IDs informados.
+    public static function applyIdTypeGenderFilter($query, $request)
+    {
+        if ($request->filled('id_type_gender')) {
+            $id_type_genders = is_string($request->id_type_gender) ? explode(',', $request->id_type_gender) : $request->id_type_gender;
+            $query->whereIn('id_type_gender', (array) $id_type_genders);
+        }
+        return $query;
+    }
+
+
+    // Aplica filtro no campo "id_type_group".
+    // - Aceita múltiplos valores como string separada por vírgula ou array.
+    // - Utiliza whereIn para filtrar pelos IDs informados.
+    public static function applyIdTypeGroupFilter($query, $request)
+    {
+        if ($request->filled('id_type_group')) {
+            $id_type_groups = is_string($request->id_type_group) ? explode(',', $request->id_type_group) : $request->id_type_group;
+            $query->whereIn('id_type_group', (array) $id_type_groups);
         }
         return $query;
     }
