@@ -3,6 +3,7 @@
 use App\Http\Controllers\CredentialController;
 use App\Http\Controllers\ObsController;
 use App\Http\Controllers\PersonController;
+use App\Http\Controllers\PersonUserController;
 use App\Http\Controllers\TypeGenderController;
 use App\Http\Controllers\TypeGroupController;
 use App\Http\Controllers\TypeParticipationController;
@@ -89,6 +90,14 @@ Route::prefix('v1')->middleware('verify.headers')->group(function () {
             Route::post('', [PersonController::class, 'store']);
             Route::put('/{id}', [PersonController::class, 'update']);
             Route::delete('/{id}', [PersonController::class, 'destroy']);
+        });
+
+        Route::prefix('person-user')->group(function () {
+            Route::get('', [PersonUserController::class, 'index']);
+            Route::get('/{id}', [PersonUserController::class, 'show']);
+            Route::post('', [PersonUserController::class, 'store']);
+            Route::put('/{id}', [PersonUserController::class, 'update']);
+            Route::delete('/{id}', [PersonUserController::class, 'destroy']);
         });
 
     });

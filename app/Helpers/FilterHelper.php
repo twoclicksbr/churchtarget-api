@@ -107,6 +107,17 @@ class FilterHelper
         return $query;
     }
 
+
+    // Aplica filtro no campo "email" com busca parcial (LIKE).
+    // - Se enviado na requisição, procura ocorrências que contenham o valor informado.
+    public static function applyEmailFilter($query, $request)
+    {
+        if ($request->filled('email')) {
+            $query->where('email', 'like', '%' . $request->email . '%');
+        }
+        return $query;
+    }
+
     
     // Aplica filtro no campo "active".
     // - Se enviado na requisição, filtra pelo valor informado (0 ou 1).
