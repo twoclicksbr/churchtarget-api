@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AddressController;
 use App\Http\Controllers\CredentialController;
 use App\Http\Controllers\ObsController;
 use App\Http\Controllers\PersonController;
@@ -107,6 +108,14 @@ Route::prefix('v1')->middleware('verify.headers')->group(function () {
             Route::post('', [TypeAddressController::class, 'store']);
             Route::put('/{id}', [TypeAddressController::class, 'update']);
             Route::delete('/{id}', [TypeAddressController::class, 'destroy']);
+        });
+
+        Route::prefix('address')->group(function () {
+            Route::get('', [AddressController::class, 'index']);
+            Route::get('/{id}', [AddressController::class, 'show']);
+            Route::post('', [AddressController::class, 'store']);
+            Route::put('/{id}', [AddressController::class, 'update']);
+            Route::delete('/{id}', [AddressController::class, 'destroy']);
         });
 
     });
