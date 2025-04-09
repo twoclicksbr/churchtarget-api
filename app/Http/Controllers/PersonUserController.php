@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Helpers\{FilterHelper, LogHelper};
+use App\Models\Contact;
 
 class PersonUserController extends Controller
 {
@@ -94,21 +95,23 @@ class PersonUserController extends Controller
 
         LogHelper::createLog('created', $this->tableName, $record->id, null, $record->toArray());
 
-        // return response()->json([
-        //     'id' => $record->id,
-        //     'name' => $record->name,
-        //     'active' => $record->active,
-        //     'created_at' => $record->created_at->format('Y-m-d H:i:s'),
-        //     'updated_at' => $record->updated_at->format('Y-m-d H:i:s'),
-        // ], 201);
+        $contact = Contact::create([
+            'id_credential' => session('id_credential'),
+            'route' => 'person',
+            'id_parent' => $record->id_person,
+            'id_type_contact' => 4, // E-mail
+            'value' => $record->email,
+            'active' => 1,
+        ]);
+        
+        LogHelper::createLog('created', 'contact', $contact->id, null, $contact->toArray());
+        
 
         return response()->json([
             'id' => $record->id,
             'id_person' => $record->id_person,
             'email' => $record->email,
             'active' => $record->active,
-            'created_at' => $record->created_at_formatted,
-            'updated_at' => $record->updated_at_formatted,
         ], 201);
     }
 
@@ -144,8 +147,6 @@ class PersonUserController extends Controller
             'id_person' => $record->id_person,
             'email' => $record->email,
             'active' => $record->active,
-            'created_at' => $record->created_at_formatted,
-            'updated_at' => $record->updated_at_formatted,
         ]);
     }
 
