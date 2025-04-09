@@ -11,17 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('type_contact', function (Blueprint $table) {
+        Schema::create('contact', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('id_credential');
-            $table->string('name')->unique();
-            $table->string('input_type'); // Ex: tel, text, number, email, etc.
-            $table->string('mask')->nullable(); // Ex: (99) 9999-9999 ou (99) 99999-9999
+            $table->string('route');                         // Origem (ex: person, church)
+            $table->unsignedBigInteger('id_parent');         // ID do registro vinculado
+            $table->unsignedBigInteger('id_type_contact');   // Tipo de contato
+            $table->string('value');                         // Ex: número, email, @instagram
             $table->integer('active')->default(1);
             $table->timestamps();
     
-            // Foreign key
+            // Foreign Keys
             $table->foreign('id_credential')->references('id')->on('credential');
+            $table->foreign('id_type_contact')->references('id')->on('type_contact');
         });
     }
 
@@ -30,6 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('type_contact');
+        Schema::dropIfExists('contact');
     }
 };

@@ -1,11 +1,13 @@
 <?php
 
 use App\Http\Controllers\AddressController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CredentialController;
 use App\Http\Controllers\ObsController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\PersonUserController;
 use App\Http\Controllers\TypeAddressController;
+use App\Http\Controllers\TypeContactController;
 use App\Http\Controllers\TypeGenderController;
 use App\Http\Controllers\TypeGroupController;
 use App\Http\Controllers\TypeParticipationController;
@@ -116,6 +118,22 @@ Route::prefix('v1')->middleware('verify.headers')->group(function () {
             Route::post('', [AddressController::class, 'store']);
             Route::put('/{id}', [AddressController::class, 'update']);
             Route::delete('/{id}', [AddressController::class, 'destroy']);
+        });
+
+        Route::prefix('type-contact')->group(function () {
+            Route::get('', [TypeContactController::class, 'index']);
+            Route::get('/{id}', [TypeContactController::class, 'show']);
+            Route::post('', [TypeContactController::class, 'store']);
+            Route::put('/{id}', [TypeContactController::class, 'update']);
+            Route::delete('/{id}', [TypeContactController::class, 'destroy']);
+        });
+
+        Route::prefix('contact')->group(function () {
+            Route::get('', [ContactController::class, 'index']);
+            Route::get('/{id}', [ContactController::class, 'show']);
+            Route::post('', [ContactController::class, 'store']);
+            Route::put('/{id}', [ContactController::class, 'update']);
+            Route::delete('/{id}', [ContactController::class, 'destroy']);
         });
 
     });

@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Helpers\{FilterHelper, LogHelper};
 
-class TypeContactController extends Controller
+class ContactController extends Controller
 {
-    protected string $tableName = 'type_contact';
-    protected string $tableLabel = 'type_contact';
-    protected string $modelName = 'TypeContact';
+    protected string $tableName = 'contact';
+    protected string $tableLabel = 'contact';
+    protected string $modelName = 'Contact';
 
     protected function model()
     {
@@ -22,19 +22,23 @@ class TypeContactController extends Controller
         $query = FilterHelper::baseQuery($this->model());
 
         $query = FilterHelper::applyIdFilter($query, $request);
-        $query = FilterHelper::applyNameFilter($query, $request);
-        
-        if ($request->filled('input_type')) {
-            $query->where('input_type', 'like', '%' . $request->input_type . '%');
+        $query = FilterHelper::applyRouteFilter($query, $request);
+        $query = FilterHelper::applyIdParentFilter($query, $request);
+
+        if ($request->filled('id_type_contact')) {
+            $ids = is_string($request->id_type_contact) ? explode(',', $request->id_type_contact) : $request->id_type_contact;
+            $query->whereIn('id_type_contact', (array) $ids);
+        }
+
+        if ($request->filled('value')) {
+            $query->where('value', 'like', '%' . $request->value . '%');
         }
 
         $query = FilterHelper::applyActiveFilter($query, $request);
-        
         $query = FilterHelper::applyDateFilters($query, $request);
 
-        // $query = FilterHelper::applyOrderFilter($query, $request);
         $query = FilterHelper::applyOrderFilter($query, $request, [
-            'id', 'name', 'input_type', 'mask', 'active', 'created_at', 'updated_at'
+            'id', 'route', 'id_parent', 'id_type_contact', 'value', 'active', 'created_at', 'updated_at'
         ]);
 
         $perPage = FilterHelper::getPerPage($request);
@@ -42,9 +46,10 @@ class TypeContactController extends Controller
         $dados = $query->paginate($perPage)->through(function ($item) {
             return [
                 'id' => $item->id,
-                'name' => $item->name,
-                'input_type' => $item->input_type,
-                'mask' => $item->mask,
+                'route' => $item->route,
+                'id_parent' => $item->id_parent,
+                'id_type_contact' => $item->id_type_contact,
+                'value' => $item->value,
                 'active' => $item->active,
                 'created_at' => $item->created_at_formatted,
                 'updated_at' => $item->updated_at_formatted,
@@ -58,8 +63,10 @@ class TypeContactController extends Controller
             'applied_filters' => $request->all(),
             'available_filters' => [
                 'id' => 'array ou string separada por vírgula',
-                'name' => 'string',
-                'input_type' => 'nome do tipo de campo: text, number, email, etc',
+                'route' => 'string (ex: person)',
+                'id_parent' => 'ID do registro vinculado',
+                'id_type_contact' => 'ID do tipo de contato',
+                'value' => 'filtro parcial',
                 'active' => '0 ou 1',
                 'created_at_start' => 'data (Y-m-d)',
                 'created_at_end' => 'data (Y-m-d)',
@@ -78,9 +85,10 @@ class TypeContactController extends Controller
 
         return response()->json([
             'id' => $record->id,
-            'name' => $record->name,
-            'input_type' => $record->input_type,
-            'mask' => $record->mask,
+            'route' => $record->route,
+            'id_parent' => $record->id_parent,
+            'id_type_contact' => $record->id_type_contact,
+            'value' => $record->value,
             'active' => $record->active,
             'created_at' => $record->created_at_formatted,
             'updated_at' => $record->updated_at_formatted,
@@ -90,16 +98,18 @@ class TypeContactController extends Controller
     public function store(Request $request)
     {
         FilterHelper::validateOrFail($request->all(), [
-            'name' => 'required|unique:' . $this->tableName . ',name',
-            'input_type' => 'required|string|max:50',
-            'mask' => 'nullable|string|max:255',
+            'route' => 'required|string|max:255',
+            'id_parent' => 'required|integer',
+            'id_type_contact' => 'required|exists:type_contact,id',
+            'value' => 'required|string|max:255',
         ]);
 
         $record = $this->model()->create([
             'id_credential' => session('id_credential'),
-            'name' => $request->name,
-            'input_type' => $request->input_type,
-            'mask' => $request->mask,
+            'route' => $request->route,
+            'id_parent' => $request->id_parent,
+            'id_type_contact' => $request->id_type_contact,
+            'value' => $request->value,
             'active' => 1,
         ]);
 
@@ -107,12 +117,11 @@ class TypeContactController extends Controller
 
         return response()->json([
             'id' => $record->id,
-            'name' => $record->name,
-            'input_type' => $record->input_type,
-            'mask' => $record->mask,
+            'route' => $record->route,
+            'id_parent' => $record->id_parent,
+            'id_type_contact' => $record->id_type_contact,
+            'value' => $record->value,
             'active' => $record->active,
-            'created_at' => $record->created_at_formatted,
-            'updated_at' => $record->updated_at_formatted,
         ], 201);
     }
 
@@ -121,18 +130,20 @@ class TypeContactController extends Controller
         $record = FilterHelper::findEditableOrFail($this->model(), $id);
 
         FilterHelper::validateOrFail($request->all(), [
-            'name' => 'required|unique:' . $this->tableName . ',name,' . $id,
-            'input_type' => 'required|string|max:50',
-            'mask' => 'nullable|string|max:255',
+            'route' => 'required|string|max:255',
+            'id_parent' => 'required|integer',
+            'id_type_contact' => 'required|exists:type_contact,id',
+            'value' => 'required|string|max:255',
             'active' => 'required|in:0,1',
         ]);
 
         $old = $record->toArray();
 
         $record->update([
-            'name' => $request->name,
-            'input_type' => $request->input_type,
-            'mask' => $request->mask,
+            'route' => $request->route,
+            'id_parent' => $request->id_parent,
+            'id_type_contact' => $request->id_type_contact,
+            'value' => $request->value,
             'active' => $request->active,
         ]);
 
@@ -140,12 +151,11 @@ class TypeContactController extends Controller
 
         return response()->json([
             'id' => $record->id,
-            'name' => $record->name,
-            'input_type' => $record->input_type,
-            'mask' => $record->mask,
+            'route' => $record->route,
+            'id_parent' => $record->id_parent,
+            'id_type_contact' => $record->id_type_contact,
+            'value' => $record->value,
             'active' => $record->active,
-            'created_at' => $record->created_at_formatted,
-            'updated_at' => $record->updated_at_formatted,
         ]);
     }
 
