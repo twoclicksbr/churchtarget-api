@@ -74,13 +74,17 @@ class TypeUserController extends Controller
 
         LogHelper::createLog('show', $this->tableName, $record->id);
 
-        return response()->json([
+        return response()->json(array_merge([
             'id' => $record->id,
             'name' => $record->name,
             'active' => $record->active,
             'created_at' => $record->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $record->updated_at->format('Y-m-d H:i:s'),
-        ]);
+        ], 
+        session('id_credential') == 1 ? [
+            'id_credential' => $record->id_credential
+            ] : [])
+        );
     }
 
     public function store(Request $request)

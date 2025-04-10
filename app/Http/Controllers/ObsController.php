@@ -78,8 +78,15 @@ class ObsController extends Controller
 
         $query = $this->model()->where('id', $id);
 
+        // if ($idCredential != 1) {
+        //     $query->where('id_credential', $idCredential);
+        // }
+
         if ($idCredential != 1) {
-            $query->where('id_credential', $idCredential);
+            $query->where(function ($q) use ($idCredential) {
+                $q->where('id_credential', $idCredential)
+                  ->orWhere('id_credential', 1);
+            });
         }
 
         $record = $query->first();
@@ -90,15 +97,19 @@ class ObsController extends Controller
 
         LogHelper::createLog('show', $this->tableName, $record->id);
 
-        return response()->json([
+        return response()->json(array_merge([
             'id' => $record->id,
             'id_person' => $record->id_person,
             'route' => $record->route,
             'id_parent' => $record->id_parent,
             'content' => $record->content,
-            'created_at' => $record->created_at_formatted,
-            'updated_at' => $record->updated_at_formatted,
-        ]);
+            'created_at' => $record->created_at->format('Y-m-d H:i:s'),
+            'updated_at' => $record->updated_at->format('Y-m-d H:i:s'),
+        ], 
+        session('id_credential') == 1 ? [
+            'id_credential' => $record->id_credential
+            ] : [])
+        );
     }
 
     public function store(Request $request)

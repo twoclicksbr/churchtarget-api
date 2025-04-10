@@ -114,7 +114,26 @@ class AddressController extends Controller
 
         LogHelper::createLog('show', $this->tableName, $record->id);
 
-        return response()->json($record);
+        return response()->json(array_merge([
+            'id' => $record->id,
+            'route' => $record->route,
+            'id_parent' => $record->id_parent,
+            'id_type_address' => $record->id_type_address,
+            'cep' => $record->cep,
+            'logradouro' => $record->logradouro,
+            'numero' => $record->numero,
+            'complemento' => $record->complemento,
+            'bairro' => $record->bairro,
+            'localidade' => $record->localidade,
+            'uf' => $record->uf,
+            'active' => $record->active,
+            'created_at' => $record->created_at->format('Y-m-d H:i:s'),
+            'updated_at' => $record->updated_at->format('Y-m-d H:i:s'),
+        ], 
+        session('id_credential') == 1 ? [
+            'id_credential' => $record->id_credential
+            ] : [])
+        );
     }
 
     public function store(Request $request)
