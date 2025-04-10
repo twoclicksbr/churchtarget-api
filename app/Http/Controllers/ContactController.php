@@ -56,6 +56,26 @@ class ContactController extends Controller
             ];
         });
 
+        $dados = $query->paginate($perPage)->through(function ($item) {
+            $response = [
+                'id' => $item->id,
+                'route' => $item->route,
+                'id_parent' => $item->id_parent,
+                'id_type_contact' => $item->id_type_contact,
+                'value' => $item->value,
+                'active' => $item->active,
+                'created_at' => $item->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $item->updated_at->format('Y-m-d H:i:s'),
+            ];
+        
+            // 🔐 Só exibe para a matriz (id_credential = 1)
+            if (session('id_credential') == 1) {
+                $response['id_credential'] = $item->id_credential;
+            }
+        
+            return $response;
+        });
+
         LogHelper::createLog('viewed', $this->tableName, 0, null, $request->all());
 
         return response()->json([

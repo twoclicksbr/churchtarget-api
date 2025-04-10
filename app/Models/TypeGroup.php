@@ -18,7 +18,7 @@ class TypeGroup extends Model
     ];
 
     protected $hidden = [
-        'id_credential',
+        // 'id_credential',
     ];
 
     protected $casts = [

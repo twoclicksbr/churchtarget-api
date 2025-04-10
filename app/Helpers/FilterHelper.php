@@ -10,13 +10,39 @@ class FilterHelper
     // Retorna a query base do model considerando a credencial logada.
     // - Se id_credential = 1 (matriz), retorna todos os registros.
     // - Caso contrário, filtra apenas os registros da credencial logada.
+    // public static function baseQuery($modelInstance)
+    // {
+    //     $idCredential = session('id_credential');
+
+    //     return $idCredential == 1
+    //         ? $modelInstance->newQuery()
+    //         : $modelInstance->where('id_credential', $idCredential);
+    // }
+
     public static function baseQuery($modelInstance)
     {
         $idCredential = session('id_credential');
 
         return $idCredential == 1
-            ? $modelInstance->newQuery()
-            : $modelInstance->where('id_credential', $idCredential);
+            ? $modelInstance->newQuery() // matriz vê tudo
+            : $modelInstance->where(function ($query) use ($idCredential) {
+                $query->where('id_credential', $idCredential)
+                    ->orWhere('id_credential', 1); // vê os seus + os públicos
+            });
+    }
+
+
+
+    // Aplica filtro no campo "id_credential".
+    // - Suporta múltiplos valores via string separada por vírgula ou array.
+    // - Utiliza whereIn para buscar pelos IDs informados.
+    public static function applyIdCredentialFilter($query, $request)
+    {
+        if ($request->filled('id_credential')) {
+            $id_credentials = is_string($request->id_credential) ? explode(',', $request->id_credential) : $request->id_credential;
+            $query->whereIn('id_credential', (array) $id_credentials);
+        }
+        return $query;
     }
 
     
@@ -201,8 +227,12 @@ class FilterHelper
 
         $query = $modelInstance->where('id', $id);
 
+        // Se for a matriz, pode ver tudo
         if ($idCredential != 1) {
-            $query->where('id_credential', $idCredential);
+            $query->where(function ($q) use ($idCredential) {
+                $q->where('id_credential', $idCredential)
+                ->orWhere('id_credential', 1);
+            });
         }
 
         $record = $query->first();
@@ -220,18 +250,35 @@ class FilterHelper
     // - Matriz (id_credential = 1): pode editar qualquer registro.
     // - Filiais: só podem editar registros da própria credencial.
     // - Se não encontrar ou não tiver permissão, retorna erro 404.
+    // public static function findEditableOrFail($modelInstance, $id)
+    // {
+    //     $idCredential = session('id_credential');
+
+    //     $record = $modelInstance->find($id);
+
+    //     if (!$record || ($idCredential != 1 && $record->id_credential != $idCredential)) {
+    //         abort(response()->json(['error' => 'Registro não encontrado.'], 404));
+    //     }
+
+    //     return $record;
+    // }
+
     public static function findEditableOrFail($modelInstance, $id)
     {
         $idCredential = session('id_credential');
 
         $record = $modelInstance->find($id);
 
-        if (!$record || ($idCredential != 1 && $record->id_credential != $idCredential)) {
+        if (
+            !$record ||
+            ($idCredential != 1 && $record->id_credential != $idCredential)
+        ) {
             abort(response()->json(['error' => 'Registro não encontrado.'], 404));
         }
 
         return $record;
     }
+
 
 
     // Valida os dados recebidos com base nas regras informadas.

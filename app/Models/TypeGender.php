@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+
 // 🔁 ALTERAR O NOME DA CLASSE
 class TypeGender extends Model
 {   
@@ -18,7 +19,7 @@ class TypeGender extends Model
     ];
 
     protected $hidden = [
-        'id_credential',
+        // 'id_credential',
     ];
 
     protected $casts = [

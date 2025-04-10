@@ -21,6 +21,7 @@ class TypeGroupController extends Controller
     {
         $query = FilterHelper::baseQuery($this->model());
         $query = FilterHelper::applyIdFilter($query, $request);
+        $query = FilterHelper::applyIdCredentialFilter($query, $request);
         $query = FilterHelper::applyNameFilter($query, $request);
         $query = FilterHelper::applyActiveFilter($query, $request);
         $query = FilterHelper::applyDateFilters($query, $request);
@@ -28,13 +29,20 @@ class TypeGroupController extends Controller
         $perPage = FilterHelper::getPerPage($request);
 
         $dados = $query->paginate($perPage)->through(function ($item) {
-            return [
+            $response = [
                 'id' => $item->id,
                 'name' => $item->name,
                 'active' => $item->active,
                 'created_at' => $item->created_at->format('Y-m-d H:i:s'),
                 'updated_at' => $item->updated_at->format('Y-m-d H:i:s'),
             ];
+        
+            // 🔐 Só exibe para a matriz (id_credential = 1)
+            if (session('id_credential') == 1) {
+                $response['id_credential'] = $item->id_credential;
+            }
+        
+            return $response;
         });
 
         LogHelper::createLog('viewed', $this->tableName, 0, null, $request->all());
@@ -61,13 +69,17 @@ class TypeGroupController extends Controller
 
         LogHelper::createLog('show', $this->tableName, $record->id);
 
-        return response()->json([
+        return response()->json(array_merge([
             'id' => $record->id,
             'name' => $record->name,
             'active' => $record->active,
             'created_at' => $record->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $record->updated_at->format('Y-m-d H:i:s'),
-        ]);
+        ], 
+        session('id_credential') == 1 ? [
+            'id_credential' => $record->id_credential
+            ] : [])
+        );
     }
 
     public function store(Request $request)
