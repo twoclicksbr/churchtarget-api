@@ -5,6 +5,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CredentialController;
 use App\Http\Controllers\ObsController;
 use App\Http\Controllers\PersonController;
+use App\Http\Controllers\PersonRestrictionController;
 use App\Http\Controllers\PersonUserController;
 use App\Http\Controllers\TypeAddressController;
 use App\Http\Controllers\TypeContactController;
@@ -104,6 +105,18 @@ Route::prefix('v1')->middleware('verify.headers')->group(function () {
             Route::delete('/{id}', [PersonUserController::class, 'destroy']);
         });
 
+        Route::prefix('person-restriction')->group(function () {
+            Route::get('', [PersonRestrictionController::class, 'index']);
+            Route::get('/{id}', [PersonRestrictionController::class, 'show']);
+            Route::post('', [PersonRestrictionController::class, 'store']);
+            Route::put('/{id}', [PersonRestrictionController::class, 'update']);
+            Route::delete('/{id}', [PersonRestrictionController::class, 'destroy']);
+        });
+
+        Route::prefix('person-leader')->group(function () {
+            Route::get('', [App\Http\Controllers\PersonLeaderController::class, 'index']);
+        });
+
         Route::prefix('type-address')->group(function () {
             Route::get('', [TypeAddressController::class, 'index']);
             Route::get('/{id}', [TypeAddressController::class, 'show']);
@@ -135,6 +148,8 @@ Route::prefix('v1')->middleware('verify.headers')->group(function () {
             Route::put('/{id}', [ContactController::class, 'update']);
             Route::delete('/{id}', [ContactController::class, 'destroy']);
         });
+
+        
 
     });
 });

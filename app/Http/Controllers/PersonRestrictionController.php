@@ -3,53 +3,49 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
-use App\Helpers\LogHelper;
-use App\Helpers\FilterHelper;
+use App\Helpers\{FilterHelper, LogHelper};
+use Illuminate\Support\Facades\DB;
 
-class TypeGenderController extends Controller
+class PersonRestrictionController extends Controller
 {
-    protected string $tableName = 'type_gender';
-    protected string $tableLabel = 'type_genders';
-    protected string $modelName = 'TypeGender';
+    protected string $tableName = 'person_restriction';
+    protected string $tableLabel = 'restrições';
+    protected string $modelName = 'PersonRestriction';
 
     protected function model()
     {
-        $modelClass = '\\App\\Models\\' . $this->modelName;
-        return new $modelClass;
+        $modelClass = "\\App\\Models\\{$this->modelName}";
+        return new $modelClass();
     }
 
     public function index(Request $request)
     {
         $query = FilterHelper::baseQuery($this->model());
         $query = FilterHelper::applyIdFilter($query, $request);
-        $query = FilterHelper::applyIdCredentialFilter($query, $request);
-        $query = FilterHelper::applyNameFilter($query, $request);
-        $query = FilterHelper::applyActiveFilter($query, $request);
         $query = FilterHelper::applyDateFilters($query, $request);
-        $query = FilterHelper::applyOrderFilter($query, $request);
 
-        $options = FilterHelper::getOptions($request);
-        $perPage = $options['per_page'];
+        // $query = FilterHelper::applyOrderFilter($query, $request);
+        $query = FilterHelper::applyOrderFilter($query, $request, [
+            'id', 'id_person', 'id_type_user', 'created_at', 'updated_at'
+        ]);
+
+        $perPage = FilterHelper::getPerPage($request);
 
         $dados = $query->paginate($perPage)->through(function ($item) {
             $response = [
                 'id' => $item->id,
-                'name' => $item->name,
-                'active' => $item->active,
+                'id_person' => $item->id_person,
+                'id_type_user' => $item->id_type_user,
                 'created_at' => $item->created_at->format('Y-m-d H:i:s'),
                 'updated_at' => $item->updated_at->format('Y-m-d H:i:s'),
             ];
-        
-            // 🔐 Só exibe para a matriz (id_credential = 1)
+
             if (session('id_credential') == 1) {
                 $response['id_credential'] = $item->id_credential;
             }
-        
+
             return $response;
         });
-        
 
         LogHelper::createLog('viewed', $this->tableName, 0, null, $request->all());
 
@@ -58,17 +54,16 @@ class TypeGenderController extends Controller
             'applied_filters' => $request->all(),
             'available_filters' => [
                 'id' => 'array ou string separada por vírgula',
-                'name' => 'string',
-                'active' => '0 ou 1',
+                'id_person' => 'integer',
+                'id_type_user' => 'integer',
                 'created_at_start' => 'data (Y-m-d)',
                 'created_at_end' => 'data (Y-m-d)',
                 'updated_at_start' => 'data (Y-m-d)',
                 'updated_at_end' => 'data (Y-m-d)',
             ],
-            'options' => $options,
+            'options' => FilterHelper::getOptions($request),
         ]);
     }
-
 
     public function show($id)
     {
@@ -76,48 +71,53 @@ class TypeGenderController extends Controller
 
         LogHelper::createLog('show', $this->tableName, $record->id);
 
-        return response()->json(array_merge([
+        $response = [
             'id' => $record->id,
-            'name' => $record->name,
-            'active' => $record->active,
+            'id_person' => $record->id_person,
+            'id_type_user' => $record->id_type_user,
             'created_at' => $record->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $record->updated_at->format('Y-m-d H:i:s'),
-        ], 
-        session('id_credential') == 1 ? [
-            'id_credential' => $record->id_credential
-            ] : [])
-        );
+        ];
+
+        if (session('id_credential') == 1) {
+            $response['id_credential'] = $record->id_credential;
+        }
+
+        return response()->json($response);
     }
 
     public function store(Request $request)
     {
-        $idCredential = session('id_credential');
-
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|unique:' . $this->tableName . ',name',
-        ], [
-            'name.required' => 'O campo name é obrigatório.',
-            'name.unique' => 'Este nome já está em uso.',
-        ]);
-
-        if ($validator->fails()) {
-            throw new ValidationException($validator, response()->json([
-                'errors' => $validator->errors(),
-            ], 422));
-        }
+        FilterHelper::validateOrFail($request->all(), [
+            'id_person' => 'required|exists:person,id',
+            'id_type_user' => [
+                'required',
+                'integer',
+                function ($attribute, $value, $fail) {
+                    $exists = DB::table('type_user')
+                        ->where('id', $value)
+                        ->whereIn('id_credential', [1, session('id_credential')])
+                        ->exists();
+        
+                    if (! $exists) {
+                        $fail('O campo tipo de usuário é inválido.');
+                    }
+                },
+            ],
+        ]);        
 
         $record = $this->model()->create([
-            'id_credential' => $idCredential,
-            'name' => $request->name,
-            'active' => 1,
+            'id_credential' => session('id_credential'),
+            'id_person' => $request->id_person,
+            'id_type_user' => $request->id_type_user,
         ]);
 
         LogHelper::createLog('created', $this->tableName, $record->id, null, $record->toArray());
 
         return response()->json([
             'id' => $record->id,
-            'name' => $record->name,
-            'active' => $record->active,
+            'id_person' => $record->id_person,
+            'id_type_user' => $record->id_type_user,
             'created_at' => $record->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $record->updated_at->format('Y-m-d H:i:s'),
         ], 201);
@@ -128,28 +128,36 @@ class TypeGenderController extends Controller
         $record = FilterHelper::findEditableOrFail($this->model(), $id);
 
         FilterHelper::validateOrFail($request->all(), [
-            'name' => 'required|unique:' . $this->tableName . ',name,' . $id,
-            'active' => 'required|in:0,1',
-        ], [
-            'name.required' => 'O campo name é obrigatório.',
-            'name.unique' => 'Este nome já está em uso.',
-            'active.required' => 'O campo active é obrigatório.',
-            'active.in' => 'O campo active deve ser 0 ou 1.',
+            'id_person' => 'required|exists:person,id',
+            'id_type_user' => [
+                'required',
+                'integer',
+                function ($attribute, $value, $fail) {
+                    $exists = DB::table('type_user')
+                        ->where('id', $value)
+                        ->whereIn('id_credential', [1, session('id_credential')])
+                        ->exists();
+    
+                    if (! $exists) {
+                        $fail('O campo tipo de usuário é inválido.');
+                    }
+                },
+            ],
         ]);
 
         $old = $record->toArray();
 
         $record->update([
-            'name' => $request->name,
-            'active' => $request->active,
+            'id_person' => $request->id_person,
+            'id_type_user' => $request->id_type_user,
         ]);
 
         LogHelper::createLog('updated', $this->tableName, $record->id, $old, $record->toArray());
 
         return response()->json([
             'id' => $record->id,
-            'name' => $record->name,
-            'active' => $record->active,
+            'id_person' => $record->id_person,
+            'id_type_user' => $record->id_type_user,
             'created_at' => $record->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $record->updated_at->format('Y-m-d H:i:s'),
         ]);
@@ -158,7 +166,6 @@ class TypeGenderController extends Controller
     public function destroy($id)
     {
         $record = FilterHelper::findEditableOrFail($this->model(), $id);
-
         $old = $record->toArray();
 
         $record->delete();

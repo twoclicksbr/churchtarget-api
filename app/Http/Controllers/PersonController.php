@@ -26,7 +26,12 @@ class PersonController extends Controller
         $query = FilterHelper::applyIdTypeGroupFilter($query, $request);
         $query = FilterHelper::applyActiveFilter($query, $request);
         $query = FilterHelper::applyDateFilters($query, $request);
-        $query = FilterHelper::applyOrderFilter($query, $request);
+
+        // $query = FilterHelper::applyOrderFilter($query, $request);
+        $query = FilterHelper::applyOrderFilter($query, $request, [
+            'id', 'name', 'birthdate', 'id_type_gender', 'id_type_group', 'active', 'created_at', 'updated_at'
+        ]);
+
         $perPage = FilterHelper::getPerPage($request);
 
         $dados = $query->paginate($perPage)->through(function ($item) {

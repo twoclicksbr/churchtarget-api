@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Helpers\{FilterHelper, LogHelper};
 use App\Models\Contact;
+use Illuminate\Validation\Rule;
 
 class PersonUserController extends Controller
 {
@@ -28,7 +29,12 @@ class PersonUserController extends Controller
         $query = FilterHelper::applyActiveFilter($query, $request);
 
         $query = FilterHelper::applyDateFilters($query, $request);
-        $query = FilterHelper::applyOrderFilter($query, $request);
+
+        // $query = FilterHelper::applyOrderFilter($query, $request);
+        $query = FilterHelper::applyOrderFilter($query, $request, [
+            'id', 'id_person', 'email', 'active', 'created_at', 'updated_at'
+        ]);
+
         $perPage = FilterHelper::getPerPage($request);
 
         $dados = $query->paginate($perPage)->through(function ($item) {
@@ -92,7 +98,13 @@ class PersonUserController extends Controller
     {
         FilterHelper::validateOrFail($request->all(), [
             'id_person' => 'required|exists:person,id',
-            'email' => 'required|email|unique:' . $this->tableName . ',email',
+            'email' => [
+                'required',
+                'email',
+                Rule::unique($this->tableName)->where(function ($query) {
+                    return $query->where('id_credential', session('id_credential'));
+                }),
+            ],
             'password' => 'required|min:6',
         ]);
 
@@ -132,10 +144,17 @@ class PersonUserController extends Controller
 
         FilterHelper::validateOrFail($request->all(), [
             'id_person' => 'required|exists:person,id',
-            'email' => 'required|email|unique:' . $this->tableName . ',email,' . $id,
+            'email' => [
+                'required',
+                'email',
+                Rule::unique($this->tableName)->ignore($id)->where(function ($query) {
+                    return $query->where('id_credential', session('id_credential'));
+                }),
+            ],
             'password' => 'nullable|min:6',
             'active' => 'required|in:0,1',
         ]);
+        
 
         $old = $record->toArray();
 
