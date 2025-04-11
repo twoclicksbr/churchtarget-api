@@ -51,4 +51,9 @@ class Obs extends Model
     {
         return $this->updated_at?->format('Y-m-d H:i:s');
     }
+
+    public function person()
+    {
+        return $this->belongsTo(Person::class, 'id_person');
+    }
 }

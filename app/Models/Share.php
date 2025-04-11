@@ -3,32 +3,24 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\TypeGender;
-use App\Models\TypeGroup;
 
-
-// 🔁 ALTERAR O NOME DA CLASSE
-class Person extends Model
-{   
-    // 🔁 ALTERAR O NOME DA TABELA
-    protected string $tableName = 'person';
+class Share extends Model
+{
+    protected string $tableName = 'share';
 
     protected $fillable = [
         'id_credential',
-        'name',
-        'birthdate',
+        'id_type_share',
         'id_type_gender',
-        'id_type_group',
+        'id_type_participation',
+        'id_person_leader',
+        'link',
         'active',
-        // 🔁 ADICIONAR OUTROS CAMPOS SE NECESSÁRIO
     ];
 
-    protected $hidden = [
-        'id_credential',
-    ];
+    protected $hidden = [];
 
     protected $casts = [
-        'birthdate' => 'date',
         'active' => 'integer',
     ];
 
@@ -41,6 +33,10 @@ class Person extends Model
     {
         parent::__construct($attributes);
         $this->table = $this->tableName;
+
+        if (session('id_credential') !== 1) {
+            $this->hidden[] = 'id_credential';
+        }
     }
 
     public function getCreatedAtFormattedAttribute()
@@ -53,19 +49,24 @@ class Person extends Model
         return $this->updated_at?->format('Y-m-d H:i:s');
     }
 
-    // public function setNameAttribute($value)
-    // {
-    //     // $this->attributes['name'] = ucfirst(strtolower($value));
-    // }
+    // 🔗 Relacionamentos
+    public function typeShare()
+    {
+        return $this->belongsTo(TypeShare::class, 'id_type_share');
+    }
 
-    // Relacionamentos
     public function typeGender()
     {
         return $this->belongsTo(TypeGender::class, 'id_type_gender');
     }
 
-    public function typeGroup()
+    public function typeParticipation()
     {
-        return $this->belongsTo(TypeGroup::class, 'id_type_group');
+        return $this->belongsTo(TypeParticipation::class, 'id_type_participation');
+    }
+
+    public function leader()
+    {
+        return $this->belongsTo(Person::class, 'id_person_leader');
     }
 }

@@ -29,13 +29,17 @@ class PersonRestrictionController extends Controller
             'id', 'id_person', 'id_type_user', 'created_at', 'updated_at'
         ]);
 
+        $query->with(['person', 'typeUser']);
+
         $perPage = FilterHelper::getPerPage($request);
 
         $dados = $query->paginate($perPage)->through(function ($item) {
             $response = [
                 'id' => $item->id,
                 'id_person' => $item->id_person,
+                'name_person' => $item->person?->name,
                 'id_type_user' => $item->id_type_user,
+                'name_type_user' => $item->typeUser?->name,
                 'created_at' => $item->created_at->format('Y-m-d H:i:s'),
                 'updated_at' => $item->updated_at->format('Y-m-d H:i:s'),
             ];

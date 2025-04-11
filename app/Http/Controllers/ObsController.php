@@ -32,12 +32,15 @@ class ObsController extends Controller
             'id', 'id_person', 'route', 'id_parent', 'created_at', 'updated_at'
         ]);
 
+        $query->with(['person']);
+
         $perPage = FilterHelper::getPerPage($request);
 
         $dados = $query->paginate($perPage)->through(function ($item) {
             $response = [
                 'id' => $item->id,
                 'id_person' => $item->id_person,
+                'name_person' => $item->person?->name,
                 'route' => $item->route,
                 'id_parent' => $item->id_parent,
                 'content' => $item->content,

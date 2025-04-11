@@ -41,20 +41,9 @@ class ContactController extends Controller
             'id', 'route', 'id_parent', 'id_type_contact', 'value', 'active', 'created_at', 'updated_at'
         ]);
 
-        $perPage = FilterHelper::getPerPage($request);
+        $query->with(['typeContact']);
 
-        $dados = $query->paginate($perPage)->through(function ($item) {
-            return [
-                'id' => $item->id,
-                'route' => $item->route,
-                'id_parent' => $item->id_parent,
-                'id_type_contact' => $item->id_type_contact,
-                'value' => $item->value,
-                'active' => $item->active,
-                'created_at' => $item->created_at_formatted,
-                'updated_at' => $item->updated_at_formatted,
-            ];
-        });
+        $perPage = FilterHelper::getPerPage($request);
 
         $dados = $query->paginate($perPage)->through(function ($item) {
             $response = [
@@ -62,6 +51,7 @@ class ContactController extends Controller
                 'route' => $item->route,
                 'id_parent' => $item->id_parent,
                 'id_type_contact' => $item->id_type_contact,
+                'name_type_contact' => $item->typeContact?->name,
                 'value' => $item->value,
                 'active' => $item->active,
                 'created_at' => $item->created_at->format('Y-m-d H:i:s'),

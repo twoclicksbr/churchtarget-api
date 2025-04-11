@@ -35,12 +35,15 @@ class PersonUserController extends Controller
             'id', 'id_person', 'email', 'active', 'created_at', 'updated_at'
         ]);
 
+        $query->with(['person']);
+
         $perPage = FilterHelper::getPerPage($request);
 
         $dados = $query->paginate($perPage)->through(function ($item) {
             $response = [
                 'id' => $item->id,
                 'id_person' => $item->id_person,
+                'name_person' => $item->person?->name,
                 'email' => $item->email,
                 'active' => $item->active,
                 'created_at' => $item->created_at->format('Y-m-d H:i:s'),

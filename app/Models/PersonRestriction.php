@@ -43,4 +43,14 @@ class PersonRestriction extends Model
     {
         return $this->updated_at?->format('Y-m-d H:i:s');
     }
+
+    public function person()
+    {
+        return $this->belongsTo(Person::class, 'id_person');
+    }
+
+    public function typeUser()
+    {
+        return $this->belongsTo(TypeUser::class, 'id_type_user');
+    }
 }

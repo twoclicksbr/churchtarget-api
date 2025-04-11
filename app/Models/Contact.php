@@ -68,4 +68,6 @@ class Contact extends Model
         $this->attributes['value'] = $value;
     }
 
+    
+
 }

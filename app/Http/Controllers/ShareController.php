@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Helpers\{FilterHelper, LogHelper};
 
-class PersonController extends Controller
+class ShareController extends Controller
 {
-    protected string $tableName = 'person';
-    protected string $tableLabel = 'person';
-    protected string $modelName = 'Person';
+    protected string $tableName = 'share';
+    protected string $tableLabel = 'shares';
+    protected string $modelName = 'Share';
 
     protected function model()
     {
@@ -20,41 +20,61 @@ class PersonController extends Controller
     public function index(Request $request)
     {
         $query = FilterHelper::baseQuery($this->model());
+
         $query = FilterHelper::applyIdFilter($query, $request);
-        $query = FilterHelper::applyNameFilter($query, $request);
-        $query = FilterHelper::applyIdTypeGenderFilter($query, $request);
-        $query = FilterHelper::applyIdTypeGroupFilter($query, $request);
+
+        if ($request->filled('id_type_share')) {
+            $query->whereIn('id_type_share', (array) explode(',', $request->id_type_share));
+        }
+
+        if ($request->filled('id_type_gender')) {
+            $query->whereIn('id_type_gender', (array) explode(',', $request->id_type_gender));
+        }
+
+        if ($request->filled('id_type_participation')) {
+            $query->whereIn('id_type_participation', (array) explode(',', $request->id_type_participation));
+        }
+
+        if ($request->filled('id_person_leader')) {
+            $query->whereIn('id_person_leader', (array) explode(',', $request->id_person_leader));
+        }
+
+        if ($request->filled('link')) {
+            $query->where('link', 'like', '%' . $request->link . '%');
+        }
+
         $query = FilterHelper::applyActiveFilter($query, $request);
         $query = FilterHelper::applyDateFilters($query, $request);
 
-        // $query = FilterHelper::applyOrderFilter($query, $request);
         $query = FilterHelper::applyOrderFilter($query, $request, [
-            'id', 'name', 'birthdate', 'id_type_gender', 'id_type_group', 'active', 'created_at', 'updated_at'
+            'id', 'id_type_share', 'id_type_gender', 'id_type_participation', 'id_person_leader', 'link', 'active', 'created_at', 'updated_at'
         ]);
 
-        $query->with(['typeGender', 'typeGroup']);
+        $query->with(['typeShare', 'typeGender', 'typeParticipation', 'leader']);
 
         $perPage = FilterHelper::getPerPage($request);
 
         $dados = $query->paginate($perPage)->through(function ($item) {
             $response = [
                 'id' => $item->id,
-                'name' => $item->name,
-                'birthdate' => $item->birthdate?->format('Y-m-d'),
+                'id_type_share' => $item->id_type_share,
+                'name_type_share' => $item->typeShare?->name,
                 'id_type_gender' => $item->id_type_gender,
                 'name_type_gender' => $item->typeGender?->name,
-                'id_type_group' => $item->id_type_group,
-                'name_type_group' => $item->typeGroup?->name,
+                'id_type_participation' => $item->id_type_participation,
+                'name_type_participation' => $item->typeParticipation?->name,
+                'id_person_leader' => $item->id_person_leader,
+                'name_person_leader' => $item->leader?->name,
+                'link' => $item->link,
                 'active' => $item->active,
                 'created_at' => $item->created_at->format('Y-m-d H:i:s'),
                 'updated_at' => $item->updated_at->format('Y-m-d H:i:s'),
             ];
-        
-            // 🔐 Só exibe para a matriz (id_credential = 1)
+
             if (session('id_credential') == 1) {
                 $response['id_credential'] = $item->id_credential;
             }
-        
+
             return $response;
         });
 
@@ -65,9 +85,11 @@ class PersonController extends Controller
             'applied_filters' => $request->all(),
             'available_filters' => [
                 'id' => 'array ou string separada por vírgula',
-                'name' => 'string',
-                'id_type_gender' => 'informa o id da tabela type_gender',
-                'id_type_group' => 'informa o id da tabela type_group',
+                'id_type_share' => 'ID do tipo de conteúdo',
+                'id_type_gender' => 'ID do gênero',
+                'id_type_participation' => 'ID do tipo de participação',
+                'id_person_leader' => 'ID da pessoa líder',
+                'link' => 'filtro parcial por link',
                 'active' => '0 ou 1',
                 'created_at_start' => 'data (Y-m-d)',
                 'created_at_end' => 'data (Y-m-d)',
@@ -86,35 +108,35 @@ class PersonController extends Controller
 
         return response()->json(array_merge([
             'id' => $record->id,
-            'name' => $record->name,
-            'birthdate' => $record->birthdate?->format('Y-m-d'),
+            'id_type_share' => $record->id_type_share,
             'id_type_gender' => $record->id_type_gender,
-            'id_type_group' => $record->id_type_group,
+            'id_type_participation' => $record->id_type_participation,
+            'id_person_leader' => $record->id_person_leader,
+            'link' => $record->link,
             'active' => $record->active,
             'created_at' => $record->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $record->updated_at->format('Y-m-d H:i:s'),
-        ], 
-        session('id_credential') == 1 ? [
-            'id_credential' => $record->id_credential
-            ] : [])
-        );
+        ],
+        session('id_credential') == 1 ? ['id_credential' => $record->id_credential] : []));
     }
 
     public function store(Request $request)
     {
         FilterHelper::validateOrFail($request->all(), [
-            'name' => 'required|string|max:255',
-            'birthdate' => 'nullable|date',
+            'id_type_share' => 'required|exists:type_share,id',
             'id_type_gender' => 'required|exists:type_gender,id',
-            'id_type_group' => 'required|exists:type_group,id',
+            'id_type_participation' => 'required|exists:type_participation,id',
+            'id_person_leader' => 'required|exists:person,id',
+            'link' => 'required|string|max:255',
         ]);
 
         $record = $this->model()->create([
             'id_credential' => session('id_credential'),
-            'name' => $request->name,
-            'birthdate' => $request->birthdate,
+            'id_type_share' => $request->id_type_share,
             'id_type_gender' => $request->id_type_gender,
-            'id_type_group' => $request->id_type_group,
+            'id_type_participation' => $request->id_type_participation,
+            'id_person_leader' => $request->id_person_leader,
+            'link' => $request->link,
             'active' => 1,
         ]);
 
@@ -122,13 +144,12 @@ class PersonController extends Controller
 
         return response()->json([
             'id' => $record->id,
-            'name' => $record->name,
-            'birthdate' => $record->birthdate?->format('Y-m-d'),
+            'id_type_share' => $record->id_type_share,
             'id_type_gender' => $record->id_type_gender,
-            'id_type_group' => $record->id_type_group,
+            'id_type_participation' => $record->id_type_participation,
+            'id_person_leader' => $record->id_person_leader,
+            'link' => $record->link,
             'active' => $record->active,
-            'created_at' => $record->created_at_formatted,
-            'updated_at' => $record->updated_at_formatted,
         ], 201);
     }
 
@@ -137,20 +158,22 @@ class PersonController extends Controller
         $record = FilterHelper::findEditableOrFail($this->model(), $id);
 
         FilterHelper::validateOrFail($request->all(), [
-            'name' => 'required|string|max:255',
-            'birthdate' => 'nullable|date',
+            'id_type_share' => 'required|exists:type_share,id',
             'id_type_gender' => 'required|exists:type_gender,id',
-            'id_type_group' => 'required|exists:type_group,id',
+            'id_type_participation' => 'required|exists:type_participation,id',
+            'id_person_leader' => 'required|exists:person,id',
+            'link' => 'required|string|max:255',
             'active' => 'required|in:0,1',
         ]);
 
         $old = $record->toArray();
 
         $record->update([
-            'name' => $request->name,
-            'birthdate' => $request->birthdate,
+            'id_type_share' => $request->id_type_share,
             'id_type_gender' => $request->id_type_gender,
-            'id_type_group' => $request->id_type_group,
+            'id_type_participation' => $request->id_type_participation,
+            'id_person_leader' => $request->id_person_leader,
+            'link' => $request->link,
             'active' => $request->active,
         ]);
 
@@ -158,20 +181,18 @@ class PersonController extends Controller
 
         return response()->json([
             'id' => $record->id,
-            'name' => $record->name,
-            'birthdate' => $record->birthdate?->format('Y-m-d'),
+            'id_type_share' => $record->id_type_share,
             'id_type_gender' => $record->id_type_gender,
-            'id_type_group' => $record->id_type_group,
+            'id_type_participation' => $record->id_type_participation,
+            'id_person_leader' => $record->id_person_leader,
+            'link' => $record->link,
             'active' => $record->active,
-            'created_at' => $record->created_at_formatted,
-            'updated_at' => $record->updated_at_formatted,
         ]);
     }
 
     public function destroy($id)
     {
         $record = FilterHelper::findEditableOrFail($this->model(), $id);
-
         $old = $record->toArray();
         $record->delete();
 

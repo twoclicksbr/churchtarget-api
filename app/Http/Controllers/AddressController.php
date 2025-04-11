@@ -55,6 +55,8 @@ class AddressController extends Controller
             'active', 'created_at', 'updated_at'
         ]);
 
+        $query->with(['typeAddress']);
+
         $perPage = FilterHelper::getPerPage($request);
 
         $dados = $query->paginate($perPage)->through(function ($item) {

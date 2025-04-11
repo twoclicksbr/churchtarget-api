@@ -7,6 +7,7 @@ use App\Http\Controllers\ObsController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\PersonRestrictionController;
 use App\Http\Controllers\PersonUserController;
+use App\Http\Controllers\ShareController;
 use App\Http\Controllers\TypeAddressController;
 use App\Http\Controllers\TypeContactController;
 use App\Http\Controllers\TypeGenderController;
@@ -63,14 +64,6 @@ Route::prefix('v1')->middleware('verify.headers')->group(function () {
             Route::post('', [TypeParticipationController::class, 'store']);
             Route::put('/{id}', [TypeParticipationController::class, 'update']);
             Route::delete('/{id}', [TypeParticipationController::class, 'destroy']);
-        });
-
-        Route::prefix('type-share')->group(function () {
-            Route::get('', [TypeShareController::class, 'index']);
-            Route::get('/{id}', [TypeShareController::class, 'show']);
-            Route::post('', [TypeShareController::class, 'store']);
-            Route::put('/{id}', [TypeShareController::class, 'update']);
-            Route::delete('/{id}', [TypeShareController::class, 'destroy']);
         });
 
         Route::prefix('type-group')->group(function () {
@@ -147,6 +140,22 @@ Route::prefix('v1')->middleware('verify.headers')->group(function () {
             Route::post('', [ContactController::class, 'store']);
             Route::put('/{id}', [ContactController::class, 'update']);
             Route::delete('/{id}', [ContactController::class, 'destroy']);
+        });
+
+        Route::prefix('type-share')->group(function () {
+            Route::get('', [TypeShareController::class, 'index']);
+            Route::get('/{id}', [TypeShareController::class, 'show']);
+            Route::post('', [TypeShareController::class, 'store']);
+            Route::put('/{id}', [TypeShareController::class, 'update']);
+            Route::delete('/{id}', [TypeShareController::class, 'destroy']);
+        });
+
+        Route::prefix('share')->group(function () {
+            Route::get('', [ShareController::class, 'index']);
+            Route::get('/{id}', [ShareController::class, 'show']);
+            Route::post('', [ShareController::class, 'store']);
+            Route::put('/{id}', [ShareController::class, 'update']);
+            Route::delete('/{id}', [ShareController::class, 'destroy']);
         });
 
         
