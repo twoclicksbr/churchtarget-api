@@ -3,17 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use DateTimeInterface;
 
-class TypeContact extends Model
+class TypeEmail extends Model
 {
-    protected string $tableName = 'type_contact';
+    protected string $tableName = 'type_email';
 
     protected $fillable = [
         'id_credential',
         'name',
-        'input_type',
-        'mask',
         'active',
     ];
 
@@ -34,6 +31,10 @@ class TypeContact extends Model
     {
         parent::__construct($attributes);
         $this->table = $this->tableName;
+
+        if (session('id_credential') !== 1) {
+            $this->hidden[] = 'id_credential';
+        }
     }
 
     public function getCreatedAtFormattedAttribute()
@@ -46,8 +47,8 @@ class TypeContact extends Model
         return $this->updated_at?->format('Y-m-d H:i:s');
     }
 
-    public function setNameAttribute($value)
+    public function credential()
     {
-        $this->attributes['name'] = ucfirst(strtolower($value));
+        return $this->belongsTo(Credential::class, 'id_credential');
     }
 }

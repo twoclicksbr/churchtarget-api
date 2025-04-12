@@ -1,8 +1,12 @@
 <?php
 
 use App\Http\Controllers\AddressController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CredentialController;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\EmailContentController;
+use App\Http\Controllers\EmailPreviewController;
 use App\Http\Controllers\ObsController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\PersonRestrictionController;
@@ -10,6 +14,8 @@ use App\Http\Controllers\PersonUserController;
 use App\Http\Controllers\ShareController;
 use App\Http\Controllers\TypeAddressController;
 use App\Http\Controllers\TypeContactController;
+use App\Http\Controllers\TypeDocumentController;
+use App\Http\Controllers\TypeEmailController;
 use App\Http\Controllers\TypeGenderController;
 use App\Http\Controllers\TypeGroupController;
 use App\Http\Controllers\TypeParticipationController;
@@ -27,6 +33,22 @@ Route::get('/user', function (Request $request) {
 Route::prefix('v1')->middleware('verify.headers')->group(function () {
     Route::get('/test', function () {
         return response()->json(['message' => 'Rota pública funcionando']);
+    });
+
+    Route::post('/test-email', [EmailPreviewController::class, 'sendTest']);
+
+
+    Route::prefix('auth')->group(function () {
+        Route::post('/login', [AuthController::class, 'login']);
+        Route::post('/logout', [AuthController::class, 'logout']);
+
+        Route::post('/rec-password/env', [AuthController::class, 'recPassword']);
+        Route::post('/rec-password/verify', [AuthController::class, 'verifyRecoveryCode']);
+        Route::post('/rec-password/reset', [AuthController::class, 'resetPassword']);
+    });
+
+    Route::prefix('email')->group(function () {
+        Route::post('', [ShareController::class, 'store']);
     });
 
     Route::prefix('admin')->group(function () {
@@ -158,7 +180,39 @@ Route::prefix('v1')->middleware('verify.headers')->group(function () {
             Route::delete('/{id}', [ShareController::class, 'destroy']);
         });
 
-        
+        Route::prefix('type-email')->group(function () {
+            Route::get('', [TypeEmailController::class, 'index']);
+            Route::get('/{id}', [TypeEmailController::class, 'show']);
+            Route::post('', [TypeEmailController::class, 'store']);
+            Route::put('/{id}', [TypeEmailController::class, 'update']);
+            Route::delete('/{id}', [TypeEmailController::class, 'destroy']);
+        });
+
+        Route::prefix('email-content')->group(function () {
+            Route::get('', [EmailContentController::class, 'index']);
+            Route::get('/{id}', [EmailContentController::class, 'show']);
+            Route::post('', [EmailContentController::class, 'store']);
+            Route::put('/{id}', [EmailContentController::class, 'update']);
+            Route::delete('/{id}', [EmailContentController::class, 'destroy']);
+        });
+
+        Route::prefix('type-document')->group(function () {
+            Route::get('', [TypeDocumentController::class, 'index']);
+            Route::get('/{id}', [TypeDocumentController::class, 'show']);
+            Route::post('', [TypeDocumentController::class, 'store']);
+            Route::put('/{id}', [TypeDocumentController::class, 'update']);
+            Route::delete('/{id}', [TypeDocumentController::class, 'destroy']);
+        });
+
+        Route::prefix('document')->group(function () {
+            Route::get('', [DocumentController::class, 'index']);
+            Route::get('/{id}', [DocumentController::class, 'show']);
+            Route::post('', [DocumentController::class, 'store']);
+            Route::put('/{id}', [DocumentController::class, 'update']);
+            Route::delete('/{id}', [DocumentController::class, 'destroy']);
+        });
+
+
 
     });
 });
