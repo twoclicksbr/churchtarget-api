@@ -1,26 +1,26 @@
 <?php
 
-use App\Http\Controllers\AddressController;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ContactController;
-use App\Http\Controllers\CredentialController;
-use App\Http\Controllers\DocumentController;
-use App\Http\Controllers\EmailContentController;
-use App\Http\Controllers\EmailPreviewController;
-use App\Http\Controllers\ObsController;
-use App\Http\Controllers\PersonController;
-use App\Http\Controllers\PersonRestrictionController;
-use App\Http\Controllers\PersonUserController;
-use App\Http\Controllers\ShareController;
-use App\Http\Controllers\TypeAddressController;
-use App\Http\Controllers\TypeContactController;
-use App\Http\Controllers\TypeDocumentController;
-use App\Http\Controllers\TypeEmailController;
-use App\Http\Controllers\TypeGenderController;
-use App\Http\Controllers\TypeGroupController;
-use App\Http\Controllers\TypeParticipationController;
-use App\Http\Controllers\TypeShareController;
-use App\Http\Controllers\TypeUserController;
+use App\Http\Controllers\api\AddressController;
+use App\Http\Controllers\api\AuthController;
+use App\Http\Controllers\api\ContactController;
+use App\Http\Controllers\api\CredentialController;
+use App\Http\Controllers\api\DocumentController;
+use App\Http\Controllers\api\EmailContentController;
+use App\Http\Controllers\api\EmailPreviewController;
+use App\Http\Controllers\api\ObsController;
+use App\Http\Controllers\api\PersonController;
+use App\Http\Controllers\api\PersonRestrictionController;
+use App\Http\Controllers\api\PersonUserController;
+use App\Http\Controllers\api\ShareController;
+use App\Http\Controllers\api\TypeAddressController;
+use App\Http\Controllers\api\TypeContactController;
+use App\Http\Controllers\api\TypeDocumentController;
+use App\Http\Controllers\api\TypeEmailController;
+use App\Http\Controllers\api\TypeGenderController;
+use App\Http\Controllers\api\TypeGroupController;
+use App\Http\Controllers\api\TypeParticipationController;
+use App\Http\Controllers\api\TypeShareController;
+use App\Http\Controllers\api\TypeUserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -129,7 +129,7 @@ Route::prefix('v1')->middleware('verify.headers')->group(function () {
         });
 
         Route::prefix('person-leader')->group(function () {
-            Route::get('', [App\Http\Controllers\PersonLeaderController::class, 'index']);
+            Route::get('', [App\Http\Controllers\api\PersonLeaderController::class, 'index']);
         });
 
         Route::prefix('type-address')->group(function () {

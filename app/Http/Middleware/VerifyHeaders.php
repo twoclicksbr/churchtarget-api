@@ -4,7 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use App\Models\Credential;
+use App\Models\api\Credential;
 use Illuminate\Support\Facades\Log;
 
 class VerifyHeaders
