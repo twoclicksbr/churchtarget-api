@@ -1,23 +1,26 @@
 <?php
 
-namespace App\Models\api;
+namespace App\Models\Api;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Document extends Model
+class MinistryCycle extends Model
 {
-    protected $tableName = 'document';
+    protected $tableName = 'ministry_cycle';
 
     protected $fillable = [
         'id_credential',
-        'id_person',
-        'id_type_document',
-        'value',
+        'id_ministry',
+        'title',
+        'starts_at',
+        'ends_at',
         'active',
     ];
 
     protected $casts = [
         'active' => 'integer',
+        'starts_at' => 'date',
+        'ends_at' => 'date',
     ];
 
     protected $appends = [
@@ -45,25 +48,14 @@ class Document extends Model
         return $this->updated_at?->format('Y-m-d H:i:s');
     }
 
-    public function person()
+    // Relacionamentos
+    public function credential()
     {
-        return $this->belongsTo(Person::class, 'id_person');
+        return $this->belongsTo(Credential::class, 'id_credential');
     }
 
-    public function type()
+    public function ministry()
     {
-        return $this->belongsTo(TypeDocument::class, 'id_type_document');
-    }
-
-    public function setValueAttribute($value)
-    {
-        if (isset($this->attributes['id_type_document'])) {
-            $type = TypeDocument::find($this->attributes['id_type_document']);
-            if ($type && $type->input_type === 'number') {
-                $this->attributes['value'] = preg_replace('/[^0-9]/', '', $value);
-                return;
-            }
-        }
-        $this->attributes['value'] = $value;
+        return $this->belongsTo(Ministry::class, 'id_ministry');
     }
 }

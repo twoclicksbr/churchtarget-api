@@ -1,26 +1,34 @@
 <?php
 
-use App\Http\Controllers\api\AddressController;
-use App\Http\Controllers\api\AuthController;
-use App\Http\Controllers\api\ContactController;
-use App\Http\Controllers\api\CredentialController;
-use App\Http\Controllers\api\DocumentController;
-use App\Http\Controllers\api\EmailContentController;
-use App\Http\Controllers\api\EmailPreviewController;
-use App\Http\Controllers\api\ObsController;
-use App\Http\Controllers\api\PersonController;
-use App\Http\Controllers\api\PersonRestrictionController;
-use App\Http\Controllers\api\PersonUserController;
-use App\Http\Controllers\api\ShareController;
-use App\Http\Controllers\api\TypeAddressController;
-use App\Http\Controllers\api\TypeContactController;
-use App\Http\Controllers\api\TypeDocumentController;
-use App\Http\Controllers\api\TypeEmailController;
-use App\Http\Controllers\api\TypeGenderController;
-use App\Http\Controllers\api\TypeGroupController;
-use App\Http\Controllers\api\TypeParticipationController;
-use App\Http\Controllers\api\TypeShareController;
-use App\Http\Controllers\api\TypeUserController;
+use App\Http\Controllers\Api\{
+    AddressController,
+    AuthController,
+    ContactController,
+    CredentialController,
+    DocumentController,
+    EmailConfigController,
+    MediaLibraryController,
+    MinistryController,
+    MinistryCycleController,
+    MinistryPersonRegisteredController,
+    ObsController,
+    PersonController,
+    PersonLeaderController,
+    PersonRestrictionController,
+    PersonUserController,
+    ShareController,
+    TypeAddressController,
+    TypeContactController,
+    TypeDocumentController,
+    TypeEmailConfigController,
+    TypeEmailController,
+    TypeGenderController,
+    TypeGroupController,
+    TypeParticipationController,
+    TypeShareController,
+    TypeUserController
+};
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -35,16 +43,23 @@ Route::prefix('v1')->middleware('verify.headers')->group(function () {
         return response()->json(['message' => 'Rota pública funcionando']);
     });
 
-    Route::post('/test-email', [EmailPreviewController::class, 'sendTest']);
-
-
     Route::prefix('auth')->group(function () {
         Route::post('/login', [AuthController::class, 'login']);
         Route::post('/logout', [AuthController::class, 'logout']);
+        
+        Route::prefix('email')->group(function () {
+            Route::post('/env', [AuthController::class, 'recPassword']);
+            Route::post('/verify', [AuthController::class, 'verifyRecoveryCode']);
+            Route::post('/reset', [AuthController::class, 'resetPassword']);
 
-        Route::post('/rec-password/env', [AuthController::class, 'recPassword']);
-        Route::post('/rec-password/verify', [AuthController::class, 'verifyRecoveryCode']);
-        Route::post('/rec-password/reset', [AuthController::class, 'resetPassword']);
+            Route::prefix('config')->group(function () {
+                Route::get('', [EmailConfigController::class, 'index']);
+                Route::get('/{id}', [EmailConfigController::class, 'show']);
+                Route::post('', [EmailConfigController::class, 'store']);
+                Route::put('/{id}', [EmailConfigController::class, 'update']);
+                Route::delete('/{id}', [EmailConfigController::class, 'destroy']);
+            });
+        });
     });
 
     Route::prefix('email')->group(function () {
@@ -52,10 +67,7 @@ Route::prefix('v1')->middleware('verify.headers')->group(function () {
     });
 
     Route::prefix('admin')->group(function () {
-        Route::get('/test', function () {
-            return response()->json(['message' => 'Rota admin com headers funcionando']);
-        });
-
+        
         Route::prefix('credential')->group(function () {
             Route::get('', [CredentialController::class, 'index']);
             Route::get('/{id}', [CredentialController::class, 'show']);
@@ -129,7 +141,7 @@ Route::prefix('v1')->middleware('verify.headers')->group(function () {
         });
 
         Route::prefix('person-leader')->group(function () {
-            Route::get('', [App\Http\Controllers\api\PersonLeaderController::class, 'index']);
+            Route::get('', [PersonLeaderController::class, 'index']);
         });
 
         Route::prefix('type-address')->group(function () {
@@ -180,20 +192,20 @@ Route::prefix('v1')->middleware('verify.headers')->group(function () {
             Route::delete('/{id}', [ShareController::class, 'destroy']);
         });
 
+        Route::prefix('type-email-config')->group(function () {
+            Route::get('', [TypeEmailConfigController::class, 'index']);
+            Route::get('/{id}', [TypeEmailConfigController::class, 'show']);
+            Route::post('', [TypeEmailConfigController::class, 'store']);
+            Route::put('/{id}', [TypeEmailConfigController::class, 'update']);
+            Route::delete('/{id}', [TypeEmailConfigController::class, 'destroy']);
+        });
+
         Route::prefix('type-email')->group(function () {
             Route::get('', [TypeEmailController::class, 'index']);
             Route::get('/{id}', [TypeEmailController::class, 'show']);
             Route::post('', [TypeEmailController::class, 'store']);
             Route::put('/{id}', [TypeEmailController::class, 'update']);
             Route::delete('/{id}', [TypeEmailController::class, 'destroy']);
-        });
-
-        Route::prefix('email-content')->group(function () {
-            Route::get('', [EmailContentController::class, 'index']);
-            Route::get('/{id}', [EmailContentController::class, 'show']);
-            Route::post('', [EmailContentController::class, 'store']);
-            Route::put('/{id}', [EmailContentController::class, 'update']);
-            Route::delete('/{id}', [EmailContentController::class, 'destroy']);
         });
 
         Route::prefix('type-document')->group(function () {
@@ -212,7 +224,39 @@ Route::prefix('v1')->middleware('verify.headers')->group(function () {
             Route::delete('/{id}', [DocumentController::class, 'destroy']);
         });
 
+        Route::prefix('media-library')->group(function () {
+            Route::get('', [MediaLibraryController::class, 'index']);
+            Route::get('/{id}', [MediaLibraryController::class, 'show']);
+            Route::post('', [MediaLibraryController::class, 'store']);
+            Route::delete('/{id}', [MediaLibraryController::class, 'destroy']);
+        });
 
+        Route::prefix('ministry')->group(function () {
+            Route::get('', [MinistryController::class, 'index']);
+            Route::get('/{id}', [MinistryController::class, 'show']);
+            Route::post('', [MinistryController::class, 'store']);
+            Route::put('/{id}', [MinistryController::class, 'update']);
+            Route::delete('/{id}', [MinistryController::class, 'destroy']);
+        });
+
+        Route::prefix('ministry-cycle')->group(function () {
+            Route::get('', [MinistryCycleController::class, 'index']);
+            Route::get('/{id}', [MinistryCycleController::class, 'show']);
+            Route::post('', [MinistryCycleController::class, 'store']);
+            Route::put('/{id}', [MinistryCycleController::class, 'update']);
+            Route::delete('/{id}', [MinistryCycleController::class, 'destroy']);
+        });
+        
+        Route::prefix('ministry-person-registered')->group(function () {
+            Route::get('', [MinistryPersonRegisteredController::class, 'index']);
+            Route::get('/{id}', [MinistryPersonRegisteredController::class, 'show']);
+            Route::post('', [MinistryPersonRegisteredController::class, 'store']);
+            Route::put('/{id}', [MinistryPersonRegisteredController::class, 'update']);
+            Route::delete('/{id}', [MinistryPersonRegisteredController::class, 'destroy']);
+        });
 
     });
 });
+
+
+

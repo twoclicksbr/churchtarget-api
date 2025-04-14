@@ -6,25 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
-        Schema::create('type_email', function (Blueprint $table) {
+        Schema::create('ministry_cycle', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('id_credential');
-            $table->string('name')->unique();
+            $table->unsignedBigInteger('id_ministry');
+            $table->string('title');
+            $table->date('starts_at');
+            $table->date('ends_at');
             $table->integer('active')->default(1);
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('type_email');
+        Schema::dropIfExists('ministry_cycle');
     }
+
 };

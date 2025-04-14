@@ -10,7 +10,7 @@ class RecPassword extends Model
 
     protected $fillable = [
         'id_credential',
-        'id_person_user',
+        'id_person',
         'email',
         'token',
         'expires_at',

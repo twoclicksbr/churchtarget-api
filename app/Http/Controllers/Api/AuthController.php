@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Models\Api\TypeUser;
-use App\Models\Api\{PersonUser, RecPassword};
+use App\Models\Api\{EmailConfig, PersonUser, RecPassword};
 
 use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
@@ -56,19 +56,45 @@ class AuthController extends Controller
         ], $authPermissions));
     }
 
+    protected function sendEmailTemplate($user, $defaultTemplate, $subject, $code = null)
+    {
+        $config = EmailConfig::with('type')
+            ->where('id_credential', session('id_credential'))
+            ->where('id_ministry', $user->id_ministry ?? 1)
+            ->where('active', 1)
+            ->first();
+
+        
+        $templateView = $config->type->template ?? $defaultTemplate;
+
+        $data = [
+            'userName' => $user->email,
+            'verificationCode' => $code,
+            'bannerUrl' => $config->banner_url ?? 'https://churchtarget.com/assets/default-banner.jpg',
+            'events' => $config->events ?? 'Evento padrão',
+            'clienteNome' => $config->client_name ?? config('app.name'),
+        ];
+
+        Mail::send("emails.$templateView", $data, function ($message) use ($user, $subject) {
+            $message->to($user->email)->subject($subject);
+        });
+    }
+
+
     public function recPassword(RecPasswordRequest $request)
     {
-        $user = PersonUser::where('email', $request->email)
+        $user = PersonUser::select('id', 'email', 'id_person', 'id_credential')
+            ->where('email', $request->email)
             ->where('active', 1)
             ->where('id_credential', session('id_credential'))
             ->first();
+
 
         if (! $user) {
             return response()->json(['error' => 'E-mail não encontrado.'], 404);
         }
 
         $token = (string) random_int(100000, 999999);
-        $expiresAt = Carbon::now()->addMinutes(30);
 
         RecPassword::where('email', $request->email)
             ->where('id_credential', session('id_credential'))
@@ -76,39 +102,26 @@ class AuthController extends Controller
 
         RecPassword::create([
             'id_credential' => session('id_credential'),
-            'id_person_user' => $user->id,
+            'id_person' => $user->id_person, // <- esse aqui
             'email' => $user->email,
             'token' => $token,
-            'expires_at' => $expiresAt,
+            'expires_at' => Carbon::now()->addMinutes(30),
         ]);
 
-        // Dados do e-mail
-        $data = [
-            'userName' => $user->email,
-            'verificationCode' => $token,
-            'bannerUrl' => 'https://churchtarget.com/assets/default-banner.jpg',
-            'events' => 'Ciclo do 30 Semanas 2025', // Pode vir da requisição futuramente
-            'clienteNome' => config('app.name'),
-        ];
-
-        Mail::send('emails.checkEmail', $data, function ($message) use ($user) {
-            $message->to($user->email)
-                    ->subject('Recuperação de Senha');
-        });
+        // Envia e-mail com template
+        $this->sendEmailTemplate($user, 'recPassword', 'Recuperação de Senha', $token);
 
         return response()->json([
             'message' => 'Token de recuperação gerado e enviado por e-mail.',
             'token' => $token,
-            'expires_at' => $expiresAt->format('Y-m-d H:i:s'),
         ]);
     }
-
 
     public function verifyRecoveryCode(VerifyRecoveryCodeRequest $request)
     {
         $user = PersonUser::where('email', $request->email)
             ->where('active', 1)
-            ->where('id_credential', session('id_credential'))
+            ->where('id_credential', session('id_credential')) // <- isso aqui pode ser o problema
             ->first();
 
         if (! $user) {
@@ -148,9 +161,12 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        // Apaga o token após uso
         $recovery->delete();
+
+        // Envia e-mail de confirmação de alteração
+        $this->sendEmailTemplate($user, 'passwordChanged', 'Senha Alterada com Sucesso');
 
         return response()->json(['message' => 'Senha redefinida com sucesso.']);
     }
+
 }

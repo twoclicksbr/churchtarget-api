@@ -1,58 +1,41 @@
 <?php
 
-namespace App\Http\Controllers\api;
+namespace App\Http\Controllers\Api;
 
 use Illuminate\Http\Request;
 use App\Helpers\{FilterHelper, LogHelper};
 
-class EmailContentController extends Controller
+class TypeEmailConfigController extends Controller
 {
-    protected string $tableName = 'email_content';
-    protected string $tableLabel = 'email_content';
-    protected string $modelName = 'EmailContent';
+    protected string $tableName = 'type_email_config';
+    protected string $tableLabel = 'type_email_configs';
+    protected string $modelName = 'TypeEmailConfig';
 
     protected function model()
     {
-        $modelClass = "\\App\\Models\\api\\{$this->modelName}";
+        $modelClass = "\\App\\Models\\Api\\{$this->modelName}";
         return new $modelClass();
     }
 
     public function index(Request $request)
     {
         $query = FilterHelper::baseQuery($this->model());
-
         $query = FilterHelper::applyIdFilter($query, $request);
-
-        if ($request->filled('id_type_email')) {
-            $query->whereIn('id_type_email', (array) explode(',', $request->id_type_email));
-        }
-
-        if ($request->filled('subject')) {
-            $query->where('subject', 'like', '%' . $request->subject . '%');
-        }
-
+        $query = FilterHelper::applyNameFilter($query, $request);
         $query = FilterHelper::applyActiveFilter($query, $request);
         $query = FilterHelper::applyDateFilters($query, $request);
-        
-        $query = FilterHelper::applyOrderFilter($query, $request, [
-            'id', 'id_type_email', 'subject', 'active', 'created_at', 'updated_at'
-        ]);
-
-        $query->with(['typeEmail']);
+        $query = FilterHelper::applyOrderFilter($query, $request);
 
         $perPage = FilterHelper::getPerPage($request);
 
         $dados = $query->paginate($perPage)->through(function ($item) {
             $response = [
                 'id' => $item->id,
-                'id_type_email' => $item->id_type_email,
-                'name_type_email' => $item->typeEmail?->name,
-                'subject' => $item->subject,
-                'banner_url' => $item->banner_url,
-                'body' => $item->body,
+                'name' => $item->name,
+                'template' => $item->template,
                 'active' => $item->active,
-                'created_at' => $item->created_at_formatted,
-                'updated_at' => $item->updated_at_formatted,
+                'created_at' => $item->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $item->updated_at->format('Y-m-d H:i:s'),
             ];
 
             if (session('id_credential') == 1) {
@@ -69,13 +52,13 @@ class EmailContentController extends Controller
             'applied_filters' => $request->all(),
             'available_filters' => [
                 'id' => 'array ou string separada por vírgula',
-                'id_type_email' => 'ID do tipo de e-mail',
-                'subject' => 'filtro parcial',
+                'name' => 'string (parte do nome)',
+                'template' => 'nome da blade',
                 'active' => '0 ou 1',
-                'created_at_start' => 'data (Y-m-d)',
-                'created_at_end' => 'data (Y-m-d)',
-                'updated_at_start' => 'data (Y-m-d)',
-                'updated_at_end' => 'data (Y-m-d)',
+                'created_at_start' => 'Y-m-d',
+                'created_at_end' => 'Y-m-d',
+                'updated_at_start' => 'Y-m-d',
+                'updated_at_end' => 'Y-m-d',
             ],
             'options' => FilterHelper::getOptions($request),
         ]);
@@ -87,32 +70,28 @@ class EmailContentController extends Controller
 
         LogHelper::createLog('show', $this->tableName, $record->id);
 
-        return response()->json([
+        return response()->json(array_merge([
             'id' => $record->id,
-            'id_type_email' => $record->id_type_email,
-            'subject' => $record->subject,
-            'banner_url' => $record->banner_url,
-            'body' => $record->body,
+            'name' => $record->name,
+            'template' => $record->template,
             'active' => $record->active,
-            'created_at' => $record->created_at_formatted,
-            'updated_at' => $record->updated_at_formatted,
-        ] + (session('id_credential') == 1 ? ['id_credential' => $record->id_credential] : []));
+            'created_at' => $record->created_at->format('Y-m-d H:i:s'),
+            'updated_at' => $record->updated_at->format('Y-m-d H:i:s'),
+        ], session('id_credential') == 1 ? [
+            'id_credential' => $record->id_credential
+        ] : []));
     }
 
     public function store(Request $request)
     {
         FilterHelper::validateOrFail($request->all(), [
-            'id_type_email' => 'required|exists:type_email,id',
-            'subject' => 'required|string|max:255',
-            'body' => 'required',
+            'name' => 'required|unique:' . $this->tableName . ',name',
         ]);
 
         $record = $this->model()->create([
             'id_credential' => session('id_credential'),
-            'id_type_email' => $request->id_type_email,
-            'subject' => $request->subject,
-            'banner_url' => $request->banner_url,
-            'body' => $request->body,
+            'name' => $request->name,
+            'template' => $request->template,
             'active' => 1,
         ]);
 
@@ -120,11 +99,11 @@ class EmailContentController extends Controller
 
         return response()->json([
             'id' => $record->id,
-            'id_type_email' => $record->id_type_email,
-            'subject' => $record->subject,
-            'banner_url' => $record->banner_url,
-            'body' => $record->body,
+            'name' => $record->name,
+            'template' => $record->template,
             'active' => $record->active,
+            'created_at' => $record->created_at_formatted,
+            'updated_at' => $record->updated_at_formatted,
         ], 201);
     }
 
@@ -133,19 +112,16 @@ class EmailContentController extends Controller
         $record = FilterHelper::findEditableOrFail($this->model(), $id);
 
         FilterHelper::validateOrFail($request->all(), [
-            'id_type_email' => 'required|exists:type_email,id',
-            'subject' => 'required|string|max:255',
-            'body' => 'required',
+            'name' => 'required|unique:' . $this->tableName . ',name,' . $id,
+            'template' => 'required',
             'active' => 'required|in:0,1',
         ]);
 
         $old = $record->toArray();
 
         $record->update([
-            'id_type_email' => $request->id_type_email,
-            'subject' => $request->subject,
-            'banner_url' => $request->banner_url,
-            'body' => $request->body,
+            'name' => $request->name,
+            'template' => $request->template,
             'active' => $request->active,
         ]);
 
@@ -153,11 +129,11 @@ class EmailContentController extends Controller
 
         return response()->json([
             'id' => $record->id,
-            'id_type_email' => $record->id_type_email,
-            'subject' => $record->subject,
-            'banner_url' => $record->banner_url,
-            'body' => $record->body,
+            'name' => $record->name,
+            'template' => $record->template,
             'active' => $record->active,
+            'created_at' => $record->created_at_formatted,
+            'updated_at' => $record->updated_at_formatted,
         ]);
     }
 
