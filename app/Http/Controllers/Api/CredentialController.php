@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers\api;
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
 use App\Models\Api\Credential;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
