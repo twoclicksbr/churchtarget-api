@@ -12,6 +12,7 @@ class PersonRestriction extends Model
         'id_credential',
         'id_person',
         'id_type_user',
+        'id_ministry',
     ];
 
     protected $appends = [
@@ -52,5 +53,10 @@ class PersonRestriction extends Model
     public function typeUser()
     {
         return $this->belongsTo(TypeUser::class, 'id_type_user');
+    }
+
+    public function ministry()
+    {
+        return $this->belongsTo(Ministry::class, 'id_ministry');
     }
 }

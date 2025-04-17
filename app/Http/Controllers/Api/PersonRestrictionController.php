@@ -27,7 +27,7 @@ class PersonRestrictionController extends Controller
 
         // $query = FilterHelper::applyOrderFilter($query, $request);
         $query = FilterHelper::applyOrderFilter($query, $request, [
-            'id', 'id_person', 'id_type_user', 'created_at', 'updated_at'
+            'id', 'id_person', 'id_type_user', 'id_ministry', 'created_at', 'updated_at'
         ]);
 
         $query->with(['person', 'typeUser']);
@@ -40,6 +40,7 @@ class PersonRestrictionController extends Controller
                 'id_person' => $item->id_person,
                 'name_person' => $item->person?->name,
                 'id_type_user' => $item->id_type_user,
+                'id_ministry' => $item->id_ministry,
                 'name_type_user' => $item->typeUser?->name,
                 'created_at' => $item->created_at->format('Y-m-d H:i:s'),
                 'updated_at' => $item->updated_at->format('Y-m-d H:i:s'),
@@ -61,6 +62,7 @@ class PersonRestrictionController extends Controller
                 'id' => 'array ou string separada por vírgula',
                 'id_person' => 'integer',
                 'id_type_user' => 'integer',
+                'id_ministry' => 'integer',
                 'created_at_start' => 'data (Y-m-d)',
                 'created_at_end' => 'data (Y-m-d)',
                 'updated_at_start' => 'data (Y-m-d)',
@@ -80,6 +82,7 @@ class PersonRestrictionController extends Controller
             'id' => $record->id,
             'id_person' => $record->id_person,
             'id_type_user' => $record->id_type_user,
+            'id_ministry' => $record->id_ministry,
             'created_at' => $record->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $record->updated_at->format('Y-m-d H:i:s'),
         ];
@@ -109,12 +112,14 @@ class PersonRestrictionController extends Controller
                     }
                 },
             ],
+            'id_ministry' => 'required|exists:ministry,id',
         ]);        
 
         $record = $this->model()->create([
             'id_credential' => session('id_credential'),
             'id_person' => $request->id_person,
             'id_type_user' => $request->id_type_user,
+            'id_ministry' => $request->id_ministry,
         ]);
 
         LogHelper::createLog('created', $this->tableName, $record->id, null, $record->toArray());
@@ -123,6 +128,7 @@ class PersonRestrictionController extends Controller
             'id' => $record->id,
             'id_person' => $record->id_person,
             'id_type_user' => $record->id_type_user,
+            'id_ministry' => $record->id_ministry,
             'created_at' => $record->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $record->updated_at->format('Y-m-d H:i:s'),
         ], 201);
@@ -148,6 +154,7 @@ class PersonRestrictionController extends Controller
                     }
                 },
             ],
+            'id_ministry' => 'required|exists:ministry,id',
         ]);
 
         $old = $record->toArray();
@@ -155,6 +162,7 @@ class PersonRestrictionController extends Controller
         $record->update([
             'id_person' => $request->id_person,
             'id_type_user' => $request->id_type_user,
+            'id_ministry' => $request->id_ministry,
         ]);
 
         LogHelper::createLog('updated', $this->tableName, $record->id, $old, $record->toArray());
@@ -163,6 +171,7 @@ class PersonRestrictionController extends Controller
             'id' => $record->id,
             'id_person' => $record->id_person,
             'id_type_user' => $record->id_type_user,
+            'id_ministry' => $record->id_ministry,
             'created_at' => $record->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $record->updated_at->format('Y-m-d H:i:s'),
         ]);
