@@ -40,8 +40,9 @@ class PersonRestrictionController extends Controller
                 'id_person' => $item->id_person,
                 'name_person' => $item->person?->name,
                 'id_type_user' => $item->id_type_user,
-                'id_ministry' => $item->id_ministry,
                 'name_type_user' => $item->typeUser?->name,
+                'id_ministry' => $item->id_ministry,
+                'name_ministry' => $item->ministry?->name,
                 'created_at' => $item->created_at->format('Y-m-d H:i:s'),
                 'updated_at' => $item->updated_at->format('Y-m-d H:i:s'),
             ];
