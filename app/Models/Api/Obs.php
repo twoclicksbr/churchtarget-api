@@ -3,7 +3,7 @@
 // MODELO BASE - NAO UTILIZAR DIRETAMENTE
 // Use este arquivo como referência para criar novas models
 
-namespace App\Models\api;
+namespace App\Models\Api;
 
 use Illuminate\Database\Eloquent\Model;
 
