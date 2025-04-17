@@ -14,7 +14,7 @@ class ObsController extends Controller
 
     protected function model()
     {
-        $modelClass = "\\App\\Models\\api\\{$this->modelName}";
+        $modelClass = "\\App\\Models\\Api\\{$this->modelName}";
         return new $modelClass();
     }
 
