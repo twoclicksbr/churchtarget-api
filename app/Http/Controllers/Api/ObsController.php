@@ -147,54 +147,56 @@ class ObsController extends Controller
 
     public function update(Request $request, $id)
     {
+        // 🚫 Esta função foi desativada. Código mantido apenas como referência.
         return response()->json([
             'message' => 'Função temporariamente desativada.'
         ], 403); // ou 200 se quiser retornar sucesso, mas com a mensagem
 
-        $record = FilterHelper::findEditableOrFail($this->model(), $id);
+        // $record = FilterHelper::findEditableOrFail($this->model(), $id);
 
-        FilterHelper::validateOrFail($request->all(), [
-            'id_person' => 'required|integer',
-            'route' => 'required|string',
-            'id_parent' => 'required|integer',
-            'content' => 'required|string',
-        ]);
+        // FilterHelper::validateOrFail($request->all(), [
+        //     'id_person' => 'required|integer',
+        //     'route' => 'required|string',
+        //     'id_parent' => 'required|integer',
+        //     'content' => 'required|string',
+        // ]);
 
-        $old = $record->toArray();
+        // $old = $record->toArray();
 
-        $record->update([
-            'id_person' => $request->id_person,
-            'route' => $request->route,
-            'id_parent' => $request->id_parent,
-            'content' => $request->content,
-        ]);
+        // $record->update([
+        //     'id_person' => $request->id_person,
+        //     'route' => $request->route,
+        //     'id_parent' => $request->id_parent,
+        //     'content' => $request->content,
+        // ]);
 
-        LogHelper::createLog('updated', $this->tableName, $record->id, $old, $record->toArray());
+        // LogHelper::createLog('updated', $this->tableName, $record->id, $old, $record->toArray());
 
-        return response()->json([
-            'id' => $record->id,
-            'id_person' => $record->id_person,
-            'route' => $record->route,
-            'id_parent' => $record->id_parent,
-            'content' => $record->content,
-            'created_at' => $record->created_at_formatted,
-            'updated_at' => $record->updated_at_formatted,
-        ]);
+        // return response()->json([
+        //     'id' => $record->id,
+        //     'id_person' => $record->id_person,
+        //     'route' => $record->route,
+        //     'id_parent' => $record->id_parent,
+        //     'content' => $record->content,
+        //     'created_at' => $record->created_at_formatted,
+        //     'updated_at' => $record->updated_at_formatted,
+        // ]);
     }
 
     public function destroy($id)
     {
+        // 🚫 Esta função foi desativada. Código mantido apenas como referência.
         return response()->json([
             'message' => 'Função temporariamente desativada.'
         ], 403); // ou 200 se quiser retornar sucesso, mas com a mensagem
 
-        $record = FilterHelper::findEditableOrFail($this->model(), $id);
+        // $record = FilterHelper::findEditableOrFail($this->model(), $id);
 
-        $old = $record->toArray();
-        $record->delete();
+        // $old = $record->toArray();
+        // $record->delete();
 
-        LogHelper::createLog('deleted', $this->tableName, $record->id, $old, null);
+        // LogHelper::createLog('deleted', $this->tableName, $record->id, $old, null);
 
-        return response()->json(['message' => 'Registro excluído com sucesso.']);
+        // return response()->json(['message' => 'Registro excluído com sucesso.']);
     }
 }
